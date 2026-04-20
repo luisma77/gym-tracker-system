@@ -162,16 +162,71 @@ PASOS PARA PONER EN PRODUCCION
 8. Verificar que devuelve { ok: true }
 
 
+DONDE SE GUARDAN LOS DATOS (produccion)
+
+Proveedor: Turso (https://turso.tech)
+Tipo: SQLite serverless en la nube
+Plan: gratuito (hasta 9 GB, 1 B lecturas/mes)
+Region configurada al crear la BD (elegir eu-west para menor latencia desde Espana)
+
+Acceso:
+- Dashboard web: https://app.turso.tech
+- Las credenciales de conexion estan en Vercel -> proyecto web-app -> Settings -> Environment Variables
+  - TURSO_DATABASE_URL  <- URL de la BD, formato libsql://nombre.turso.io
+  - TURSO_AUTH_TOKEN    <- token de autenticacion, generado en Turso
+
+Los datos NO estan en el PC local. No hay ningun archivo .db en uso.
+Los datos NO estan en GitHub. El repo solo contiene codigo, no datos de usuarios.
+Los datos SOLO estan en Turso, accesibles desde la web app desplegada en Vercel.
+
+Para ver o exportar datos directamente:
+- Entrar en app.turso.tech -> seleccionar la BD gym-tracker -> Shell
+- Desde ahi se puede hacer cualquier SELECT, UPDATE o DELETE manual si es necesario
+
 BASE DE DATOS (Turso SQLite serverless)
 
-Tablas:
-- users (id, email, username, full_name, password_hash, is_active, created_at)
-- exercises (id, name, muscle_group, equipment)
-- workout_sessions (id, user_id, title, training_day, week_number, notes, created_at)
-- session_sets (id, session_id, exercise_id, position, weight_kg, reps, rir)
-- body_measurements (id, user_id, measured_at, weight_kg, body_fat_percent, chest_cm, waist_cm, hip_cm, arm_cm, thigh_cm, notes)
+Tablas y lo que guardan:
+
+users
+  - id, email, username, full_name, password_hash, is_active, created_at
+  - Una fila por usuario registrado
+  - La contrasena se guarda hasheada con bcryptjs, nunca en texto plano
+
+exercises
+  - id, name, muscle_group, equipment
+  - Catalogo de ejercicios disponibles para registrar series
+  - Se llena con 12 ejercicios seed al llamar a /api/init por primera vez
+  - No esta vinculado a ningun usuario, es un catalogo global
+
+workout_sessions
+  - id, user_id, title, training_day, week_number, notes, created_at
+  - Una fila por sesion de entrenamiento registrada
+  - Vinculada al usuario por user_id
+
+session_sets
+  - id, session_id, exercise_id, position, weight_kg, reps, rir
+  - Una fila por serie dentro de una sesion
+  - Si se borra la sesion, se borran en cascada todas sus series (ON DELETE CASCADE)
+  - Aqui es donde se guardan los kg, repeticiones y RIR de cada serie
+
+body_measurements
+  - id, user_id, measured_at, weight_kg, body_fat_percent, chest_cm, waist_cm, hip_cm, arm_cm, thigh_cm, notes
+  - Una fila por registro de medidas corporales
+  - Vinculada al usuario por user_id
 
 Seed inicial: 12 ejercicios por grupos musculares (pecho, espalda, hombro, biceps, triceps, pierna, core).
+
+Como borrar todos los registros de un usuario desde la app:
+- Entrar en /settings -> "Zona de peligro" -> confirmar borrado
+- Esto ejecuta DELETE /api/profile/records que borra todas las workout_sessions del usuario
+- Al borrarse las sesiones, se borran en cascada todas sus session_sets
+- Los ejercicios del catalogo y las medidas corporales NO se borran con esta accion
+
+Como borrar un usuario completamente (solo desde Turso Shell):
+  DELETE FROM session_sets WHERE session_id IN (SELECT id FROM workout_sessions WHERE user_id = X);
+  DELETE FROM workout_sessions WHERE user_id = X;
+  DELETE FROM body_measurements WHERE user_id = X;
+  DELETE FROM users WHERE id = X;
 
 
 COMO FUNCIONA EL FLUJO DE USUARIO
