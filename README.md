@@ -88,28 +88,28 @@ Gestiona la capa de workbook:
 
 ### `api`
 
-Será la capa central de dominio:
+Backend FastAPI con autenticación JWT y estructura lista para producción:
 
-- usuarios
-- ejercicios y variantes
-- rutinas
-- sesiones
-- historial
-- sugerencias
-- volumen
+- registro y login de usuarios (JWT + Argon2)
+- catálogo de ejercicios y variantes
+- sesiones de entrenamiento
+- historial por ejercicio
+- sugerencias de carga
+- volumen semanal por grupo muscular
+- dashboard de usuario
 
 ### `web-app`
 
-Será la experiencia principal para el usuario final:
+Frontend Next.js 15 con React 19 y TypeScript:
 
-- acceso de usuarios
-- consulta de rutina
+- autenticación de usuarios (login / registro)
+- dashboard de progresión
 - registro de entrenamientos
-- panel de progreso
+- visualización de historial
 
 ## 🗺️ Estado del proyecto
 
-El repositorio define ya una base técnica clara, pero todavía no es una aplicación terminada. Ahora mismo funciona como estructura de producto y punto de partida para desarrollo incremental.
+La base técnica está implementada: API REST con autenticación funcional, frontend Next.js conectado y workbook Excel en uso diario con motor de sugerencias. El sistema está en fase de testeo y pulido antes del despliegue definitivo.
 
 ## 📌 Casos de uso previstos
 

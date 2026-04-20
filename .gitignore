@@ -21,6 +21,11 @@ excel-engine/exports/*
 .env
 .env.*
 
+# Local app data
+api/data/gym_tracker.db
+api/.pytest_cache/
+api/*.egg-info/
+
 # OS / editor
 .DS_Store
 Thumbs.db

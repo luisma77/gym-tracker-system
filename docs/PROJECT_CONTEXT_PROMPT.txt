@@ -1,0 +1,492 @@
+PROMPT DE CONTEXTO VIVO DEL PROYECTO
+
+Usa este documento como contexto operativo persistente del proyecto Gym Tracker. Debe actualizarse siempre que cambien la arquitectura, la estructura del repo, la forma de despliegue, la persistencia de datos o el estado funcional del producto.
+
+Las tres secciones finales son obligatorias en cada iteracion:
+
+1. Ultimo problema detectado
+2. Como se ha corregido
+3. Sugerencias para la proxima version
+
+OBJETIVO DEL PROYECTO
+
+Construir una web app funcional para el sistema Gym Tracker partiendo de un Excel existente. La aplicacion debe permitir:
+
+- registro de usuarios
+- login
+- persistencia real de datos
+- consulta de ejercicios
+- registro de sesiones
+- historial de entrenamiento
+- dashboard de progreso
+- futura exportacion a Excel
+
+ESTADO REAL ACTUAL
+
+El proyecto ya es funcional en local y ademas tiene frontend y API publicados fuera del PC del usuario.
+
+Funciona ahora mismo:
+
+- frontend en Next.js desplegado en Vercel
+- backend en FastAPI desplegado en Vercel Functions
+- persistencia real local en SQLite
+- compatibilidad preparada para MySQL o MariaDB mediante SQLAlchemy y PyMySQL
+- registro de usuario
+- login
+- listado de ejercicios seed
+- creacion de sesiones de entrenamiento
+- dashboard con resumen y sesiones recientes
+- errores de autenticacion mostrados por campo en email, nombre y contrasena
+- checklist visual en vivo de requisitos de contrasena durante el registro
+- dashboard reorganizado en pestanas de vista general, entreno, medidas y graficas
+- registro de medidas corporales persistido en base de datos
+- catalogo de ejercicios ampliado con mas grupos musculares y variantes
+
+Limitacion actual importante:
+
+- la API publicada en Vercel usa almacenamiento temporal serverless si no se configura una base externa
+- por tanto la version publica ya no depende del PC local, pero no debe considerarse persistencia duradera de produccion
+
+ESTRUCTURA ACTUAL DEL REPOSITORIO
+
+gym-tracker-system/
+  README.md
+  README.en.md
+  .gitignore
+  docs/
+    GYM_TRACKER_SYSTEM_PROMPT.md
+    repository-structure.md
+    system-overview.md
+    web-app-feasibility.md
+    managed-deployment.md
+    PROJECT_CONTEXT_PROMPT.txt
+    VERCEL_DEPLOY_PROMPT.txt
+  excel-engine/
+    workbook/
+    exports/
+    scripts/
+    src/
+  api/
+    .env.example
+    .gitignore
+    pyproject.toml
+    data/
+      gym_tracker.db
+    index.py
+    vercel.json
+    app/
+      __init__.py
+      main.py
+      api/
+        v1/
+          router.py
+          endpoints/
+            auth.py
+            dashboard.py
+            exercises.py
+            health.py
+            measurements.py
+            sessions.py
+      core/
+        auth.py
+        config.py
+        dependencies.py
+        security.py
+      db/
+        base.py
+        session.py
+        seed.py
+        models/
+          __init__.py
+          body_measurement.py
+          exercise.py
+          profile.py
+          session_set.py
+          user.py
+          workout_session.py
+      repositories/
+        exercises.py
+        measurements.py
+        sessions.py
+        users.py
+      schemas/
+        auth.py
+        dashboard.py
+        exercise.py
+        measurement.py
+        session.py
+        user.py
+      services/
+        auth.py
+        exercise.py
+        measurement.py
+        session.py
+    tests/
+      conftest.py
+      test_auth.py
+      test_health.py
+      test_workout_flow.py
+  web-app/
+    .env.example
+    .vercel/
+    app/
+      globals.css
+      layout.tsx
+      page.tsx
+      login/
+        page.tsx
+      register/
+        page.tsx
+      dashboard/
+        page.tsx
+    src/
+      components/
+        auth-client-form.tsx
+        dashboard-client.tsx
+        feature-grid.tsx
+      lib/
+        api.ts
+        auth-storage.ts
+        config.ts
+    package.json
+    package-lock.json
+    tsconfig.json
+    next.config.mjs
+    eslint.config.mjs
+  shared/
+    schemas/
+
+DESCRIPCION DE CADA BLOQUE
+
+- docs: documentacion de producto, arquitectura, despliegue y contexto vivo
+- excel-engine: motor Excel original y futura capa de exportacion
+- api: backend del producto, auth, persistencia y reglas del dominio
+- web-app: interfaz del usuario final y flujo de registro/login/dashboard
+- shared: espacio para contratos o esquemas compartidos
+
+COMO FUNCIONA EL PRODUCTO AHORA
+
+Flujo funcional actual del usuario:
+
+1. El usuario entra en la home del frontend.
+2. Puede abrir `/register` y crear una cuenta.
+3. El formulario muestra desde el principio que pide nombre, email valido y contrasena segura.
+4. Mientras escribe la contrasena, el frontend marca en vivo los requisitos cumplidos y pendientes.
+5. El frontend llama al backend `POST /api/v1/auth/register`.
+6. Si falla algun dato, el frontend muestra el error exacto junto al campo correspondiente.
+7. La API crea el usuario y guarda la contraseña hasheada.
+8. El frontend hace login automaticamente con `POST /api/v1/auth/login`.
+9. Si falla el acceso, el frontend indica si el problema esta en email o contrasena.
+10. El backend devuelve un token JWT.
+11. El frontend guarda el token en localStorage para este MVP local.
+12. El usuario entra en `/dashboard`.
+13. El dashboard carga:
+   - resumen del usuario
+   - ejercicios disponibles
+   - sesiones guardadas
+14. El dashboard ofrece pestanas para:
+   - vista general
+   - entreno
+   - medidas
+   - graficas
+15. En la pestana de entreno el usuario usa selectores para dia, semana, ejercicios y RIR.
+16. El usuario puede anadir varias series dentro de una misma sesion.
+17. La API guarda la sesion y sus series.
+18. El dashboard se actualiza con el historial real.
+19. En la pestana de medidas el usuario registra peso y perimetros corporales.
+20. La API guarda esas medidas.
+21. En la pestana de graficas el frontend representa tendencias de peso y volumen por sesion.
+
+Flujo publico actual:
+
+1. El frontend se sirve desde Vercel.
+2. La API se ejecuta en Vercel Functions.
+3. El usuario ya no necesita tener su PC encendido ni un `cmd` abierto para que la web responda.
+
+ENDPOINTS IMPLEMENTADOS
+
+- `GET /api/v1/health`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/exercises`
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/sessions`
+- `POST /api/v1/sessions`
+- `GET /api/v1/measurements`
+- `POST /api/v1/measurements`
+
+DONDE SE GUARDA LA INFORMACION
+
+Persistencia actual real:
+
+- Base de datos local SQLite:
+  `C:\claude\CARRERA PROFESIONAL\gym-tracker-system\api\data\gym_tracker.db`
+
+Persistencia publica actual:
+
+- En despliegue Vercel, si no se configura `DATABASE_URL`, la API usa un SQLite temporal en `/tmp/gym_tracker.db`
+- Eso permite que la API publica funcione sin depender del PC local
+- Pero esos datos pueden perderse cuando la funcion se reinicia o se redepliega
+
+Datos guardados en la base:
+
+- usuarios
+- perfiles
+- ejercicios seed
+- sesiones de entrenamiento
+- series de cada sesion
+- medidas corporales
+
+Datos guardados en navegador para el MVP local:
+
+- token JWT en localStorage
+- datos basicos del usuario autenticado en localStorage
+
+Esto significa:
+
+- los registros de usuario se guardan en la base de datos SQLite local
+- las sesiones y series se guardan en la base de datos SQLite local
+- el estado de sesion del frontend se conserva en localStorage del navegador
+
+TABLAS ACTUALES
+
+- `users`
+- `profiles`
+- `exercises`
+- `workout_sessions`
+- `session_sets`
+- `body_measurements`
+
+DATOS DE USUARIO Y REGISTROS
+
+Se guarda:
+
+- email
+- nombre completo
+- password hash
+- estado activo
+- fecha de creacion
+
+En sesiones se guarda:
+
+- usuario propietario
+- titulo de la sesion
+- dia de entrenamiento
+- semana
+- notas
+- series asociadas
+
+En cada serie se guarda:
+
+- ejercicio
+- posicion
+- repeticiones
+- RIR
+- peso en kg
+
+En medidas corporales se guarda:
+
+- fecha de medicion
+- peso
+- porcentaje graso opcional
+- pecho
+- cintura
+- cadera
+- brazo
+- muslo
+- notas
+
+ARQUITECTURA ACTUAL
+
+Arquitectura funcional local:
+
+- frontend: Next.js App Router
+- backend: FastAPI
+- ORM: SQLAlchemy
+- validacion: Pydantic
+- seguridad de password: Argon2 via pwdlib
+- auth API: JWT bearer
+- base local: SQLite
+- compatibilidad futura: MySQL o MariaDB
+
+ARQUITECTURA RECOMENDADA PARA PRODUCCION
+
+- frontend: Vercel
+- backend: Render o servicio equivalente
+- base de datos: MySQL o MariaDB gestionado
+- exportacion: excel-engine ejecutado desde backend
+
+LINKS IMPORTANTES
+
+Frontend publico actual:
+
+- https://web-app-sigma-hazel.vercel.app
+
+API publica actual:
+
+- https://api-nine-ashen-92.vercel.app/api/v1/health
+
+Nota:
+
+- la API publica ya existe y responde fuera del PC local
+- aun falta conectar una base de datos externa durable para considerar la persistencia publica como estable
+
+Documentacion externa usada como referencia:
+
+- Vercel pricing: https://vercel.com/pricing
+- Vercel domains: https://vercel.com/docs/domains
+- Render pricing: https://render.com/pricing
+- Render deploy MySQL: https://render.com/docs/deploy-mysql
+
+HERRAMIENTAS USADAS
+
+- Next.js
+- React
+- TypeScript
+- FastAPI
+- SQLAlchemy
+- Pydantic Settings
+- python-jose
+- pwdlib con Argon2
+- PyMySQL
+- SQLite
+- openpyxl
+- Vercel
+
+CRITERIOS DE SEGURIDAD IMPLEMENTADOS
+
+- contraseñas hasheadas, nunca guardadas en texto plano
+- validacion de payloads con Pydantic
+- acceso a rutas sensibles con JWT bearer
+- separacion por usuario autenticado
+- CORS configurado desde backend
+- queries con SQLAlchemy en lugar de SQL manual
+
+LIMITACIONES DE SEGURIDAD ACTUALES
+
+- el frontend guarda el JWT en localStorage para acelerar el MVP local
+- eso no es la opcion final ideal para produccion
+- en produccion se recomienda migrar a cookies HttpOnly seguras
+
+COMPROBACION REALIZADA
+
+Se ha comprobado de forma real:
+
+- `npm run build` frontend: OK
+- `GET /api/v1/health`: OK
+- registro real de usuario por HTTP: OK
+- login real por HTTP: OK
+- lectura real de ejercicios: OK
+- creacion real de sesion por HTTP: OK
+- lectura real de dashboard con datos persistidos: OK
+- `POST /api/v1/auth/register` con datos invalidos: devuelve mensajes concretos para email, nombre y contrasena
+- `POST /api/v1/auth/login` con usuario inexistente: devuelve mensaje especifico para email
+- pagina publica `/register`: muestra requisitos de alta y checklist visual de contrasena
+- redeploy publico realizado en Vercel para frontend y API
+- `GET /api/v1/exercises` publico: 26 ejercicios disponibles
+- `POST /api/v1/measurements` publico: OK
+- `GET /api/v1/measurements` publico tras crear registro: OK
+- dashboard redisenado compilado correctamente con pestanas y formularios mas guiados
+
+Resultado verificado:
+
+- el producto es funcional en local
+- registra y guarda datos reales
+- persiste usuarios y entrenamientos
+- la web publica responde desde Vercel
+- la API publica responde desde Vercel
+- se ha verificado un registro real contra la API publica sin depender del PC local
+- se ha verificado el registro real de medidas corporales contra la API publica
+
+EVALUACION HONESTA DE FUNCIONALIDAD
+
+Estado funcional:
+
+- local: SI, funcional
+- publico en internet con backend accesible: SI
+- publico en internet con persistencia durable de produccion: NO todavia
+
+EVALUACION HONESTA DE ESCALABILIDAD
+
+Estado de escalabilidad:
+
+- arquitectura: SI, razonablemente preparada
+- despliegue actual: NO, aun no plenamente escalable
+
+Motivo:
+
+- la estructura del codigo ya esta separada para crecer
+- SQLAlchemy permite cambiar de SQLite local a MySQL/MariaDB
+- el dominio esta separado por capas
+- pero faltan piezas de produccion para decir que ya es plenamente escalable:
+- base de datos externa durable y compartida
+  - migraciones reales con Alembic
+  - API publicada
+  - cookies HttpOnly o auth mas robusta
+  - rate limiting real
+  - observabilidad y backups
+
+CONCLUSION OPERATIVA
+
+El proyecto ya no es una maqueta vacia.
+
+Es un MVP funcional local con:
+
+- usuarios reales
+- login real
+- persistencia real
+- dashboard real
+- entrenamientos reales guardados
+
+Y ademas:
+
+- frontend publico sin depender del PC local
+- API publica sin depender del PC local
+
+No debe describirse todavia como "plenamente funcional y escalable en produccion" porque la persistencia publica sigue siendo temporal hasta conectar una base de datos externa durable.
+
+ULTIMO PROBLEMA DETECTADO
+
+La web resultaba demasiado basica y poco parecida al uso real del Excel: pocas opciones de ejercicio, demasiados campos manuales, falta de medidas corporales y ausencia de una zona de graficas. Ademas, el usuario detecto que un email como `prueba@prueba.prueba` podia registrarse y pidio aclarar si eso era deseado o no.
+
+COMO SE HA CORREGIDO
+
+- Se ha ampliado el seed de ejercicios hasta 26 movimientos repartidos por grupos musculares y equipamiento.
+- El seed ahora anade ejercicios faltantes aunque la base ya exista, en lugar de quedarse bloqueado con el catalogo corto inicial.
+- Se ha creado la tabla `body_measurements` con sus esquemas, repositorio, servicio y endpoints propios.
+- Se ha rehecho el dashboard con pestanas para vista general, entreno, medidas y graficas.
+- El registro de entrenamiento usa ahora selectores para dia, semana, ejercicio y RIR, y permite varias series por sesion.
+- Se ha anadido una pestana de medidas corporales con peso, grasa, pecho, cintura, cadera, brazo y muslo.
+- Se ha anadido una pestana de graficas con tendencias visuales de peso y volumen de entrenamiento.
+- Se ha dejado explicado en el formulario de registro que en este MVP se valida el formato del email, no la existencia real del buzon.
+- Se mantiene asi por ahora porque no hay pagos ni recuperacion de contrasena por email y endurecerlo de verdad exige verificacion de correo.
+- Se ha recompilado el frontend.
+- Se ha redeployado la API publica en `https://api-nine-ashen-92.vercel.app`.
+- Se ha redeployado el frontend publico en `https://web-app-sigma-hazel.vercel.app`.
+
+SUGERENCIAS PARA LA PROXIMA VERSION
+
+- conectar una base externa real mediante `DATABASE_URL`
+- migrar de localStorage a cookies HttpOnly
+- cambiar la persistencia publica temporal de Vercel por MySQL o MariaDB duradero
+- anadir recuperacion de contrasena y verificacion de email real si se quiere exigir buzones autenticos
+- mostrar tambien fuerza global de contrasena y confirmacion de contrasena
+- añadir Alembic
+- ampliar modelo con programas, workout_days y plantillas de rutina estilo Excel
+- conectar exportacion Excel real por usuario desde `excel-engine`
+
+REGLA DE MANTENIMIENTO DEL DOCUMENTO
+
+Cada cambio relevante debe actualizar:
+
+- estructura del repositorio
+- estado funcional real
+- ruta real de persistencia
+- endpoints implementados
+- comprobaciones realizadas
+- evaluacion de escalabilidad
+- ultimo problema detectado
+- como se ha corregido
+- sugerencias para la proxima version
+
+Este documento debe seguir siendo breve, claro, reutilizable y honesto sobre lo que ya funciona y lo que aun falta para produccion.
