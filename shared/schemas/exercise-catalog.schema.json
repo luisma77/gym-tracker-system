@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExerciseCatalogItem",
+  "type": "object",
+  "required": ["base", "variant", "type"],
+  "properties": {
+    "base": {
+      "type": "string"
+    },
+    "variant": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["disco", "mancuerna", "polea", "peso_corporal"]
+    },
+    "safe_name": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
