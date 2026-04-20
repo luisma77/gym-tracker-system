@@ -7,7 +7,6 @@ venv/
 # Private source code kept locally only
 api/
 shared/
-web-app/
 docs/
 excel-engine/
 
