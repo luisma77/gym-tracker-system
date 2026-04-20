@@ -1,50 +1,42 @@
 # Gym Tracker System
 
-Training tracking system for hypertrophy and strength, designed for users who want to plan routines, log sessions, and review progress in a structured way.
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Excel](https://img.shields.io/badge/Excel-2016%20compatible-217346?logo=microsoft-excel&logoColor=white)
+![API](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
+![Web](https://img.shields.io/badge/Web-Next.js-111111?logo=nextdotjs&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+* * *
 
 Language: [Español](./README.md) · **English**
 
-## What this project is
+* * *
 
-`Gym Tracker System` is a public foundation for building a training tracker focused on:
+Training tracking system for hypertrophy and strength, designed for users who want to plan routines, log sessions, review history, and visualize progress in a more structured way than ad hoc spreadsheets.
 
-- multi-week planning
-- set logging with weight, reps, and RIR
-- exercise and variant history
-- progression suggestions
-- weekly volume analysis by muscle group
+## ✨ What this project provides
 
-This repository is intended as a public, reusable product base. It is not meant to publish the author's personal spreadsheets or private data.
+- A public foundation for building a serious and reusable gym tracker.
+- Clear separation between Excel engine, backend, frontend, and shared schemas.
+- Excel 2016 compatibility as a generation or export layer.
+- A structure ready to evolve into a functional web application.
+- Bilingual documentation and a more polished public GitHub presentation.
 
-## What it is for
+## 🧩 What it is meant to do
 
-It provides a cleaner foundation than ad hoc spreadsheets or scattered notes.
+- Plan multi-week routines.
+- Log `kg`, `reps`, and `RIR` per set.
+- Review history per exercise and variant.
+- Analyze progression and weekly volume.
+- Generate or maintain compatible workbooks when needed.
 
-The goal is for a user to be able to:
-
-- follow a structured routine
-- log workouts
-- review previous performance
-- see progression over time
-- track weekly workload and volume
-
-## Current status
-
-The project already defines the main architecture:
-
-- `excel-engine`: workbook generation and Excel 2016-compatible maintenance
-- `api`: backend for domain logic
-- `web-app`: future user interface
-- `shared`: shared schemas and contracts
-
-It is not yet a finished application. It is a development-ready base designed to evolve into a product.
-
-## Current structure
+## 🏗️ Current structure
 
 ```text
 gym-tracker-system/
 ├── README.md
 ├── README.en.md
+├── LICENSE
 ├── .gitignore
 ├── docs/
 ├── excel-engine/
@@ -53,24 +45,36 @@ gym-tracker-system/
 └── shared/
 ```
 
-## Planned use cases
+## 🚀 Quick start
 
-- Build multi-week routines.
-- Log daily workouts.
-- Track progression per exercise.
-- Review history and performance.
-- Analyze muscle-group volume.
-- Generate a compatible workbook when needed.
+### Clone the repository
 
-## Product architecture
+```bash
+git clone https://github.com/luisma77/gym-tracker-system.git
+cd gym-tracker-system
+```
+
+### Read the main docs
+
+- [Getting started](./docs/getting-started.md)
+- [System overview](./docs/system-overview.md)
+- [Repository structure](./docs/repository-structure.md)
+- [Roadmap](./docs/roadmap.md)
+
+## ⚙️ Product architecture
 
 ### `excel-engine`
 
-Maintains Excel 2016 compatibility and structured workbook generation.
+Owns the workbook layer:
+
+- generation
+- validation
+- formula maintenance
+- Excel 2016 compatibility
 
 ### `api`
 
-Will serve as the central domain layer:
+Will serve as the main domain layer:
 
 - users
 - exercises and variants
@@ -82,24 +86,26 @@ Will serve as the central domain layer:
 
 ### `web-app`
 
-Will provide the main end-user experience:
+Will become the main end-user experience:
 
 - user access
 - routine view
 - workout logging
 - progress dashboard
 
-## Intended audience
+## 🗺️ Project status
 
-This repository is meant for:
+The repository already defines a clear technical base, but it is not yet a finished application. At this stage it serves as product structure and a starting point for incremental development.
 
-- developers who want to contribute
-- people who want to reuse the foundation
-- advanced users interested in the product roadmap
+## 📌 Planned use cases
 
-## Documentation
+- Create structured training routines.
+- Log daily workouts.
+- Track exercise progression.
+- Review training history and performance.
+- Analyze weekly volume by muscle group.
+- Export to workbook when needed.
 
-- [Getting started](./docs/getting-started.md)
-- [Repository structure](./docs/repository-structure.md)
-- [System overview](./docs/system-overview.md)
-- [Roadmap](./docs/roadmap.md)
+## 📄 License
+
+This project is distributed under the [MIT](./LICENSE) license.
