@@ -1,8 +1,8 @@
-import { createClient, type Client } from "@libsql/client";
+import { createClient, type Client, type InStatement, type ResultSet } from "@libsql/client";
 
 let _db: Client | null = null;
 
-export function getDb(): Client {
+function getDb(): Client {
   if (!_db) {
     _db = createClient({
       url: process.env.TURSO_DATABASE_URL!,
@@ -12,9 +12,7 @@ export function getDb(): Client {
   return _db;
 }
 
-// Convenience proxy so existing `db.execute(...)` calls still work
-export const db = new Proxy({} as Client, {
-  get(_target, prop) {
-    return (getDb() as unknown as Record<string, unknown>)[prop as string];
-  },
-});
+export const db = {
+  execute: (stmt: InStatement): Promise<ResultSet> => getDb().execute(stmt),
+  batch: (stmts: InStatement[]): Promise<ResultSet[]> => getDb().batch(stmts),
+};
