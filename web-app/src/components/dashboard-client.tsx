@@ -308,6 +308,9 @@ export function DashboardClient() {
           <button className="button secondary" onClick={() => setActiveTab("workout")} type="button">
             Registrar sesion
           </button>
+          <a className="button secondary" href="/settings">
+            Ajustes
+          </a>
           <button className="button primary" onClick={handleLogout} type="button">
             Cerrar sesion
           </button>

@@ -6,6 +6,7 @@ export type AuthResponse = {
   user: {
     id: number;
     email: string;
+    username: string;
     full_name: string;
     is_active: boolean;
     created_at: string;
@@ -78,31 +79,34 @@ export class ApiRequestError extends Error {
 
 const fieldLabels: Record<string, string> = {
   email: "Email",
+  username: "Nombre de usuario",
   full_name: "Nombre completo",
-  password: "Contrasena"
+  password: "Contrasena",
 };
 
 function formatErrorPayload(payload: ErrorPayload) {
   if (!payload?.detail) {
     return {
       message: "No se ha podido completar la peticion.",
-      fieldErrors: {}
+      fieldErrors: {},
     };
   }
 
   if (typeof payload.detail === "string") {
     return {
       message: payload.detail,
-      fieldErrors: {}
+      fieldErrors: {},
     };
   }
 
   if (!Array.isArray(payload.detail)) {
     const fieldErrors =
-      payload.detail.field && payload.detail.message ? { [payload.detail.field]: payload.detail.message } : {};
+      payload.detail.field && payload.detail.message
+        ? { [payload.detail.field]: payload.detail.message }
+        : {};
     return {
       message: payload.detail.message ?? "No se ha podido completar la peticion.",
-      fieldErrors
+      fieldErrors,
     };
   }
 
@@ -118,19 +122,21 @@ function formatErrorPayload(payload: ErrorPayload) {
     return {
       message: payload.detail
         .map((item) => {
-        const field = item.loc?.[item.loc.length - 1];
-        const label =
-          typeof field === "string" ? (fieldLabels[field] ?? field.replaceAll("_", " ")) : "campo";
-        return `${label}: ${item.msg ?? "valor no valido"}`;
-      })
+          const field = item.loc?.[item.loc.length - 1];
+          const label =
+            typeof field === "string"
+              ? (fieldLabels[field] ?? field.replaceAll("_", " "))
+              : "campo";
+          return `${label}: ${item.msg ?? "valor no valido"}`;
+        })
         .join(" "),
-      fieldErrors
+      fieldErrors,
     };
   }
 
   return {
     message: "No se ha podido completar la peticion.",
-    fieldErrors: {}
+    fieldErrors: {},
   };
 }
 
@@ -157,49 +163,50 @@ async function requestWithFriendlyErrors(input: RequestInfo | URL, init?: Reques
 
 export async function registerUser(payload: {
   email: string;
+  username: string;
   full_name: string;
   password: string;
 }) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/auth/register`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
-  return parseResponse(response);
+  return parseResponse<AuthResponse>(response);
 }
 
-export async function loginUser(payload: { email: string; password: string }) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/auth/login`, {
+export async function loginUser(payload: { identifier: string; password: string }) {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   return parseResponse<AuthResponse>(response);
 }
 
 export async function fetchExercises() {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/exercises`, {
-    cache: "no-store"
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/exercises`, {
+    cache: "no-store",
   });
 
   return parseResponse<Exercise[]>(response);
 }
 
 export async function fetchDashboard(token: string) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/dashboard/summary`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store"
+    cache: "no-store",
   });
 
   return parseResponse<DashboardSummary>(response);
 }
 
 export async function fetchSessions(token: string) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/sessions`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/sessions`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store"
+    cache: "no-store",
   });
 
   return parseResponse<WorkoutSession[]>(response);
@@ -220,22 +227,22 @@ export async function createSession(
     }>;
   }
 ) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/sessions`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/sessions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   return parseResponse<WorkoutSession>(response);
 }
 
 export async function fetchMeasurements(token: string) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/measurements`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/measurements`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store"
+    cache: "no-store",
   });
 
   return parseResponse<BodyMeasurement[]>(response);
@@ -255,14 +262,40 @@ export async function createMeasurement(
     notes?: string;
   }
 ) {
-  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/v1/measurements`, {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/measurements`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   return parseResponse<BodyMeasurement>(response);
+}
+
+export async function changePassword(
+  token: string,
+  current_password: string,
+  new_password: string
+) {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/profile/password`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ current_password, new_password }),
+  });
+
+  return parseResponse<{ message: string }>(response);
+}
+
+export async function deleteAllRecords(token: string) {
+  const response = await requestWithFriendlyErrors(`${appConfig.apiUrl}/api/profile/records`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return parseResponse<{ message: string }>(response);
 }
