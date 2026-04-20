@@ -1,30 +1,45 @@
 # Gym Tracker System
 
-Base repository for a training tracking system built around two connected layers:
+Training tracking system for hypertrophy and strength, designed for users who want to plan routines, log sessions, and review progress in a structured way.
 
-- `excel-engine`: keeps the `.xlsx` workbook as the operational Excel 2016-compatible version.
-- `web-app` + `api`: the natural evolution into a functional web application with user accounts, routines, and performance tracking.
+Language: [Español](./README.md) · **English**
 
-This repository structure is based on `GYM_TRACKER_SYSTEM_PROMPT`, included in [docs/GYM_TRACKER_SYSTEM_PROMPT.md](./docs/GYM_TRACKER_SYSTEM_PROMPT.md), preserving the main constraints:
+## What this project is
 
-- Excel 2016 compatibility is a hard requirement.
-- Python + `openpyxl` is the generation and editing engine.
-- Fixed 12-week layout, 5 training days, and 61 weekly exercise slots.
-- Stability comes first: it must work reliably before anything else.
+`Gym Tracker System` is a public foundation for building a training tracker focused on:
 
-## Language
+- multi-week planning
+- set logging with weight, reps, and RIR
+- exercise and variant history
+- progression suggestions
+- weekly volume analysis by muscle group
 
-- Spanish: `README.md`
-- English: `README.en.md`
+This repository is intended as a public, reusable product base. It is not meant to publish the author's personal spreadsheets or private data.
 
-## What this structure gives you
+## What it is for
 
-- Clear separation between workbook logic, shared schemas, API, and frontend.
-- A safe path from Excel-first to web-first without losing the current working system.
-- A clean GitHub-ready layout similar to your existing public repository style.
-- A practical foundation for a real product instead of a one-off spreadsheet.
+It provides a cleaner foundation than ad hoc spreadsheets or scattered notes.
 
-## Structure
+The goal is for a user to be able to:
+
+- follow a structured routine
+- log workouts
+- review previous performance
+- see progression over time
+- track weekly workload and volume
+
+## Current status
+
+The project already defines the main architecture:
+
+- `excel-engine`: workbook generation and Excel 2016-compatible maintenance
+- `api`: backend for domain logic
+- `web-app`: future user interface
+- `shared`: shared schemas and contracts
+
+It is not yet a finished application. It is a development-ready base designed to evolve into a product.
+
+## Current structure
 
 ```text
 gym-tracker-system/
@@ -38,40 +53,53 @@ gym-tracker-system/
 └── shared/
 ```
 
-## Can this become a real web app?
+## Planned use cases
 
-Yes.
+- Build multi-week routines.
+- Log daily workouts.
+- Track progression per exercise.
+- Review history and performance.
+- Analyze muscle-group volume.
+- Generate a compatible workbook when needed.
 
-The right approach is not to “embed Excel into a website”, but to move the business rules behind the spreadsheet into an application backend:
+## Product architecture
 
-- user authentication
-- profile management
-- exercise and variant selection
+### `excel-engine`
+
+Maintains Excel 2016 compatibility and structured workbook generation.
+
+### `api`
+
+Will serve as the central domain layer:
+
+- users
+- exercises and variants
+- routines
+- sessions
+- history
+- suggestions
+- volume
+
+### `web-app`
+
+Will provide the main end-user experience:
+
+- user access
+- routine view
 - workout logging
-- progression logic
-- exercise history
-- recommendation engine
-- weekly volume analysis
-- dashboards
+- progress dashboard
 
-In that model, Excel becomes an export and compatibility layer, not the core runtime.
+## Intended audience
 
-## Recommended MVP
+This repository is meant for:
 
-1. Sign up and sign in.
-2. User profile with bodyweight and training settings.
-3. Exercise catalog and variants.
-4. 12-week program builder aligned with the workbook structure.
-5. Session logging with kg, reps, and RIR.
-6. History and auto-suggestions.
-7. Weekly volume dashboard.
-8. Excel export.
+- developers who want to contribute
+- people who want to reuse the foundation
+- advanced users interested in the product roadmap
 
-## Suggested stack
+## Documentation
 
-- Backend: FastAPI
-- Database: PostgreSQL
-- Frontend: Next.js
-- Auth: Clerk or Auth.js
-- ORM: Prisma or SQLAlchemy
-- Deployment: Vercel for frontend and Railway/Render/Fly.io for API
+- [Getting started](./docs/getting-started.md)
+- [Repository structure](./docs/repository-structure.md)
+- [System overview](./docs/system-overview.md)
+- [Roadmap](./docs/roadmap.md)

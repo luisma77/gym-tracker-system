@@ -2,64 +2,55 @@
 
 ## Objetivo
 
-Separar claramente:
-
-- la lógica del Excel
-- la documentación del sistema
-- la futura API
-- la futura aplicación web
-- los contratos compartidos
+Separar de forma limpia las piezas del producto para que el proyecto sea mantenible, público y fácil de entender.
 
 ## Módulos
 
+### `docs/`
+
+Documentación de producto, arquitectura y roadmap.
+
 ### `excel-engine/`
 
-Contiene el motor del libro Excel.
+Motor de generación y mantenimiento de workbooks compatibles con Excel 2016.
 
-- `src/gym_tracker/constants.py`: parámetros rígidos del sistema.
-- `src/gym_tracker/workbook_layout.py`: estructura de hojas, semanas, slots y filas.
-- `src/gym_tracker/formulas.py`: plantillas de fórmulas compatibles con Excel 2016.
-- `scripts/build_workbook.py`: generación o reconstrucción del workbook.
-- `scripts/validate_workbook.py`: validaciones previas a entrega.
-- `scripts/rebuild_validations.py`: reconstrucción de data validations, sobre todo en columna B.
+- `src/gym_tracker/constants.py`: constantes del dominio
+- `src/gym_tracker/workbook_layout.py`: helpers de layout
+- `src/gym_tracker/formulas.py`: fórmulas compatibles con Excel 2016
+- `scripts/build_workbook.py`: entrada para generar workbooks
+- `scripts/validate_workbook.py`: validación funcional
+- `scripts/rebuild_validations.py`: reconstrucción de validaciones
 
 ### `api/`
 
-Contiene el backend que más adelante replicará la lógica del Excel en un modelo web.
+Backend del sistema.
 
 Responsabilidades previstas:
 
 - autenticación
-- catálogo de ejercicios
-- gestión de rutina
-- registro de sesiones
-- progresión y sugerencias
-- dashboard y volumen
-- exportación a Excel
+- ejercicios y variantes
+- programas y bloques
+- sesiones y series
+- historial
+- sugerencias
+- volumen
+- exportación
 
 ### `web-app/`
 
-Interfaz de usuario.
+Frontend del producto.
 
 Responsabilidades previstas:
 
-- login y alta de usuarios
-- selección de ejercicios y variantes
-- entrada de pesos, reps y RIR
-- consulta de historial
-- visualización de progreso y volumen
+- acceso de usuarios
+- rutina del día
+- registro de entrenamiento
+- panel de progreso
 
 ### `shared/`
 
-Contratos y esquemas reutilizables entre frontend, backend y motor Excel.
+Esquemas y contratos reutilizables entre módulos.
 
 ## Principio de diseño
 
-El Excel no debe desaparecer al principio.
-
-La estructura está pensada para:
-
-1. mantener el `.xlsx` estable
-2. sacar la lógica a módulos reutilizables
-3. construir una web encima
-4. convertir el Excel en exportación o compatibilidad
+Cada carpeta debe representar una responsabilidad clara del sistema. La estructura evita mezclar documentación, motor Excel y futura aplicación web en una sola capa.

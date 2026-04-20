@@ -1,70 +1,24 @@
 # Resumen del sistema
 
-## Base técnica
+## Visión
 
-El sistema actual es un tracker de gimnasio de 12 semanas implementado en Excel con `openpyxl`.
+Gym Tracker System busca convertirse en una plataforma para registrar entrenamiento de fuerza e hipertrofia con foco en progresión, historial y control de volumen.
 
-Condiciones duras:
+## Piezas del sistema
 
-- compatibilidad con Excel 2016
-- sin `LET`, `FILTER`, `TAKE`, `XLOOKUP`, `AGGREGATE`
-- cuidado especial con fórmulas, named ranges y data validations
+- motor Excel para compatibilidad y exportación
+- backend para la lógica del dominio
+- frontend para la experiencia principal del usuario
 
-## Núcleo funcional
+## Capacidades objetivo
 
-- 5 hojas de entrenamiento: `LUNES`, `MARTES`, `MIERCOLES`, `JUEVES`, `SABADO`
-- 61 slots semanales
-- 12 semanas
+- programas de varias semanas
+- rutinas diarias
+- registro de series
 - historial por ejercicio
-- sugerencias automáticas
-- control de volumen por grupo muscular
+- sugerencias de progresión
+- análisis de volumen
 
-## Riesgo principal
+## Dirección del producto
 
-El Excel funciona porque toda la estructura está muy acoplada:
-
-- filas
-- referencias cruzadas
-- named ranges
-- data validations
-- fórmulas de historial y sugerencias
-
-Por eso la migración a web debe respetar primero la lógica, no solo la interfaz.
-
-## Visión recomendada
-
-### Excel como motor inicial
-
-Mantener el workbook como activo principal mientras se estabiliza el código.
-
-### Backend como capa de dominio
-
-Extraer estas reglas:
-
-- semana actual
-- tipo de semana: `HIP`, `FUE`, `DEL`
-- cálculo de historial por identidad de ejercicio
-- sugerencias
-- volumen semanal
-
-### Web como experiencia de usuario
-
-La web debe permitir:
-
-- iniciar sesión
-- crear rutina
-- registrar entrenamientos
-- consultar marcas anteriores
-- recibir sugerencias
-- ver progreso
-
-## Regla estratégica
-
-La web debe leer y escribir datos del sistema.
-
-El Excel debe quedar como:
-
-- exportador
-- respaldo
-- formato legacy
-- herramienta de verificación
+La aplicación web será la experiencia principal. La capa Excel se mantiene como complemento de compatibilidad, generación y exportación.

@@ -1,30 +1,45 @@
 # Gym Tracker System
 
-Repositorio base para un sistema de seguimiento de entrenamiento con dos capas conectadas:
+Sistema de seguimiento de entrenamiento orientado a hipertrofia y fuerza, pensado para usuarios que quieren planificar rutinas, registrar sesiones y visualizar progreso de forma estructurada.
 
-- `excel-engine`: mantiene el archivo `.xlsx` como versión operativa compatible con Excel 2016.
-- `web-app` + `api`: evolución natural a una aplicación web funcional con usuarios, rutinas y registro de marcas.
+Idioma / Language: **Español** · [English](./README.en.md)
 
-El diseño de este repositorio está construido a partir de `GYM_TRACKER_SYSTEM_PROMPT`, incluido en [docs/GYM_TRACKER_SYSTEM_PROMPT.md](./docs/GYM_TRACKER_SYSTEM_PROMPT.md), respetando estas reglas clave:
+## Qué es este proyecto
 
-- Excel 2016 como restricción real de compatibilidad.
-- Python + `openpyxl` como motor de generación y edición.
-- Estructura fija de 12 semanas, 5 días de entrenamiento y 61 slots semanales.
-- Prioridad absoluta a estabilidad: primero que funcione siempre.
+`Gym Tracker System` es una base pública para desarrollar una herramienta de seguimiento de entrenamiento con foco en:
 
-## Idioma / Language
+- planificación por semanas
+- registro de series, repeticiones, RIR y carga
+- historial por ejercicio y variante
+- sugerencias de progresión
+- análisis de volumen semanal por grupo muscular
 
-- Español: `README.md`
-- English: `README.en.md`
+El repositorio está planteado como producto público y reutilizable. No pretende publicar hojas personales ni datos privados del autor.
 
-## Qué aporta esta estructura
+## Para qué sirve
 
-- Separa la lógica de negocio del libro Excel para no mezclar scripts, datos y documentación.
-- Prepara una migración progresiva a web sin romper el sistema actual.
-- Organiza catálogo, fórmulas, validaciones y documentación técnica.
-- Deja lista una base de backend y frontend para una app real con autenticación.
+Sirve como base para construir un tracker de gimnasio más sólido que una hoja improvisada o una nota suelta.
 
-## Estructura
+El objetivo es que un usuario pueda:
+
+- seguir una rutina estructurada
+- registrar sus entrenamientos
+- consultar sus marcas anteriores
+- ver si progresa
+- controlar volumen y carga semanal
+
+## Estado actual
+
+El proyecto define ya la arquitectura principal:
+
+- `excel-engine`: generación y mantenimiento de workbooks compatibles con Excel 2016
+- `api`: backend para la lógica del dominio
+- `web-app`: futura interfaz de usuario
+- `shared`: esquemas y contratos compartidos
+
+Todavía no es una aplicación terminada. Es una base de desarrollo preparada para evolucionar a producto.
+
+## Estructura actual
 
 ```text
 gym-tracker-system/
@@ -32,98 +47,73 @@ gym-tracker-system/
 ├── README.en.md
 ├── .gitignore
 ├── docs/
+│   ├── getting-started.md
 │   ├── repository-structure.md
 │   ├── system-overview.md
-│   └── web-app-feasibility.md
+│   └── roadmap.md
 ├── excel-engine/
 │   ├── workbook/
-│   │   └── .gitkeep
+│   │   └── sample-workbook.md
 │   ├── exports/
 │   │   └── .gitkeep
 │   ├── scripts/
-│   │   ├── build_workbook.py
-│   │   ├── validate_workbook.py
-│   │   └── rebuild_validations.py
 │   └── src/
-│       └── gym_tracker/
-│           ├── __init__.py
-│           ├── constants.py
-│           ├── workbook_layout.py
-│           └── formulas.py
 ├── api/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   └── main.py
 │   └── tests/
-│       └── .gitkeep
 ├── web-app/
 │   └── src/
-│       └── .gitkeep
 └── shared/
     └── schemas/
-        └── exercise-catalog.schema.json
 ```
 
-## Recomendación de arquitectura
+## Casos de uso previstos
 
-### Fase 1: Excel-first
+- Crear rutinas de varias semanas.
+- Registrar entrenamientos diarios.
+- Seguir progresión por ejercicio.
+- Consultar historial y rendimiento.
+- Analizar volumen por grupo muscular.
+- Generar un workbook compatible cuando sea necesario.
 
-- El `.xlsx` sigue siendo la fuente funcional principal.
-- `excel-engine` centraliza generación, edición, validación y reconstrucción de DVs.
-- Cada cambio se valida contra el checklist del prompt.
+## Arquitectura del producto
 
-### Fase 2: Web híbrida
+### `excel-engine`
 
-- La web no sustituye el Excel al principio.
-- La web captura usuarios, ejercicios, rutinas, sesiones y marcas.
-- El Excel pasa a ser un formato de exportación, auditoría o compatibilidad.
+Mantiene la compatibilidad con Excel 2016 y la capacidad de generar workbooks estructurados.
 
-### Fase 3: Web-first
+### `api`
 
-- La lógica de progresión vive en backend.
-- El libro Excel se genera desde datos persistidos en base de datos.
-- La experiencia principal del usuario ya no depende del `.xlsx`.
+Será la capa central de dominio:
 
-## ¿Se puede hacer una web funcional?
+- usuarios
+- ejercicios y variantes
+- rutinas
+- sesiones
+- historial
+- sugerencias
+- volumen
 
-Sí, y además tiene bastante sentido.
+### `web-app`
 
-La mejor decisión técnica no es “meter el Excel en una web”, sino convertir la lógica del Excel en reglas de negocio del backend:
+Será la experiencia principal para el usuario final:
 
-- autenticación de usuarios
-- creación de cuenta
-- selección de ejercicios
-- registro de series, reps, RIR y carga
-- cálculo de progresión
-- historial por ejercicio
-- sugerencias automáticas
-- volumen semanal por grupo muscular
-- dashboard
+- acceso de usuarios
+- consulta de rutina
+- registro de entrenamientos
+- panel de progreso
 
-Eso permite una app real, usable y escalable.
+## A quién va dirigido
 
-## MVP recomendado
+Este repositorio está pensado para:
 
-1. Registro e inicio de sesión.
-2. Perfil del usuario con peso corporal y configuración base.
-3. Catálogo de ejercicios y variantes.
-4. Rutina de 12 semanas basada en la estructura del Excel.
-5. Registro de sesiones con kg, reps y RIR.
-6. Historial y sugerencias automáticas.
-7. Dashboard con volumen semanal.
-8. Exportación a Excel compatible.
-
-## Stack sugerido
-
-- Backend: FastAPI
-- Base de datos: PostgreSQL
-- Frontend: Next.js
-- Auth: Clerk o Auth.js
-- ORM: Prisma o SQLAlchemy
-- Deploy: Vercel para frontend y Railway/Render/Fly.io para API
+- desarrolladores que quieran contribuir
+- personas que quieran reutilizar la base
+- usuarios avanzados interesados en la evolución del producto
 
 ## Documentación
 
-- [Resumen del sistema](./docs/system-overview.md)
+- [Primeros pasos](./docs/getting-started.md)
 - [Estructura del repositorio](./docs/repository-structure.md)
-- [Viabilidad de la web](./docs/web-app-feasibility.md)
+- [Resumen del sistema](./docs/system-overview.md)
+- [Roadmap](./docs/roadmap.md)
