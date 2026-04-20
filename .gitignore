@@ -4,6 +4,13 @@ __pycache__/
 .venv/
 venv/
 
+# Private source code kept locally only
+api/
+shared/
+web-app/
+docs/
+excel-engine/
+
 # Node
 node_modules/
 .next/

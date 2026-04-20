@@ -2,8 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Excel](https://img.shields.io/badge/Excel-2016%20compatible-217346?logo=microsoft-excel&logoColor=white)
-![API](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
-![Web](https://img.shields.io/badge/Web-Next.js-111111?logo=nextdotjs&logoColor=white)
+![Web](https://img.shields.io/badge/Web-Preview-1f6feb?logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 * * *
@@ -18,7 +17,8 @@ Sistema de seguimiento de entrenamiento orientado a hipertrofia y fuerza para us
 
 - Un sistema de seguimiento de entrenamiento con enfoque práctico y claro.
 - Un archivo Excel compatible para llevar control de rutinas y sesiones.
-- Una web app como versión más visual y cómoda para consultar y registrar progreso.
+- Una vista previa web para enseñar el producto de forma más visual.
+- Un enlace directo a la demo online.
 - Una explicación pública del enfoque del producto y de su utilidad real.
 
 ## 🌐 Verlo o clonarlo
@@ -30,6 +30,11 @@ Sistema de seguimiento de entrenamiento orientado a hipertrofia y fuerza para us
 Una forma más visual de enseñar el proyecto a amigos o usarlo como demo personal:
 
 - [Abrir Gym Tracker Web](https://web-app-sigma-hazel.vercel.app/)
+- [Ver preview HTML local del concepto](./preview/index.html)
+
+### Opción Excel
+
+- [Descargar Gym_Tracker.xlsx](./excel/Gym_Tracker.xlsx)
 
 ### Opción código: clonar el repositorio
 
@@ -50,7 +55,7 @@ cd gym-tracker-system
 
 ### Excel
 
-El proyecto incluye una base de trabajo pensada para usar Excel como herramienta práctica de seguimiento. Sirve para organizar rutinas, registrar entrenamientos y conservar un histórico útil sin complicar el uso.
+El proyecto incluye un archivo Excel pensado para usarlo como herramienta práctica de seguimiento. Sirve para organizar rutinas, registrar entrenamientos y conservar un histórico útil sin complicar el uso.
 
 ### Web app
 
@@ -70,79 +75,33 @@ Puede interesar a personas que:
 - prefieren una base clara para seguir cargas, repeticiones y rendimiento
 - valoran tener una opción Excel y otra web según el contexto
 
-## 🏗️ Estructura actual
+## 📦 Contenido público del repositorio
 
 ```text
 gym-tracker-system/
 ├── README.md
 ├── README.en.md
 ├── LICENSE
-├── .gitignore
-├── docs/
-│   ├── getting-started.md
-│   ├── repository-structure.md
-│   ├── system-overview.md
-│   └── roadmap.md
-├── excel-engine/
-│   ├── workbook/
-│   │   ├── Gym_Tracker.xlsx
-│   │   └── sample-workbook.md
-│   ├── exports/
-│   ├── scripts/
-│   └── src/
-├── api/
-│   ├── app/
-│   └── tests/
-├── web-app/
-│   └── src/
-└── shared/
-    └── schemas/
+├── excel/
+│   └── Gym_Tracker.xlsx
+└── preview/
+    └── index.html
 ```
 
-## 📚 Documentación principal
+## 🖥️ Cómo funciona la versión web
 
-### Revisar la documentación
+La versión web está pensada como una forma más visual de entender el producto. En lugar de trabajar sobre una hoja, el usuario puede imaginar una experiencia centrada en:
 
-- [Primeros pasos](./docs/getting-started.md)
-- [Resumen del sistema](./docs/system-overview.md)
-- [Estructura del repositorio](./docs/repository-structure.md)
-- [Roadmap](./docs/roadmap.md)
+- panel de progreso
+- seguimiento de ejercicios
+- historial de sesiones
+- lectura más cómoda del rendimiento semanal
 
-## ⚙️ Cómo funciona la idea del producto
-
-### `excel-engine`
-
-Es la capa orientada al workbook:
-
-- generación
-- validación
-- mantenimiento de fórmulas
-- compatibilidad con Excel 2016
-
-### `api`
-
-Da soporte a la lógica de la aplicación:
-
-- registro y login de usuarios (JWT + Argon2)
-- catálogo de ejercicios y variantes
-- sesiones de entrenamiento
-- historial por ejercicio
-- sugerencias de carga
-- volumen semanal por grupo muscular
-- dashboard de usuario
-
-### `web-app`
-
-Es la cara más visual del sistema:
-
-- autenticación de usuarios (login / registro)
-- dashboard de progresión
-- registro de entrenamientos
-- visualización de historial
+El enlace publicado muestra esa idea de producto de forma directa, sin necesidad de instalar nada.
 
 ## 🗺️ Estado del proyecto
 
-La base técnica ya existe y el enfoque del producto está claro: ofrecer una forma estructurada de seguir entrenamientos tanto en Excel como en una interfaz web más visual. El repositorio está pensado para mostrar qué hace el sistema, cómo se organiza y por qué puede resultar útil.
+El repositorio público está pensado como escaparate simple del producto: archivo Excel, explicación funcional y acceso visual a la demo web.
 
 ## 📌 Por qué alguien querría usarlo
 

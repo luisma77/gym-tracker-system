@@ -2,8 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Excel](https://img.shields.io/badge/Excel-2016%20compatible-217346?logo=microsoft-excel&logoColor=white)
-![API](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
-![Web](https://img.shields.io/badge/Web-Next.js-111111?logo=nextdotjs&logoColor=white)
+![Web](https://img.shields.io/badge/Web-Preview-1f6feb?logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 * * *
@@ -18,7 +17,8 @@ Training tracking system for hypertrophy and strength, designed for users who wa
 
 - A practical training tracking system with a clear purpose.
 - An Excel-based option for routines, session logging, and history tracking.
-- A web app version for a more visual and convenient experience.
+- A visual web preview of the product experience.
+- A direct link to the online demo.
 - A public explanation of what the product does and why someone would want it.
 
 ## 🌐 View it or clone it
@@ -30,6 +30,11 @@ Training tracking system for hypertrophy and strength, designed for users who wa
 A more visual way to show the project to friends or use it as a personal demo:
 
 - [Open Gym Tracker Web](https://web-app-sigma-hazel.vercel.app/)
+- [Open the local HTML preview](./preview/index.html)
+
+### Excel option
+
+- [Download Gym_Tracker.xlsx](./excel/Gym_Tracker.xlsx)
 
 ### Code option: clone the repository
 
@@ -50,7 +55,7 @@ cd gym-tracker-system
 
 ### Excel
 
-The project includes an Excel-oriented layer meant to be practical for everyday tracking. It helps organize routines, log workouts, and preserve useful training history without adding unnecessary complexity.
+The project includes an Excel file meant to be practical for everyday tracking. It helps organize routines, log workouts, and preserve useful training history without adding unnecessary complexity.
 
 ### Web app
 
@@ -70,65 +75,33 @@ It makes sense for people who:
 - care about tracking loads, reps, and performance over time
 - like having both an Excel option and a web option depending on context
 
-## 🏗️ Current structure
+## 📦 Public repository contents
 
 ```text
 gym-tracker-system/
 ├── README.md
 ├── README.en.md
 ├── LICENSE
-├── .gitignore
-├── docs/
-├── excel-engine/
-├── api/
-├── web-app/
-└── shared/
+├── excel/
+│   └── Gym_Tracker.xlsx
+└── preview/
+    └── index.html
 ```
 
-## 📚 Main documentation
+## 🖥️ How the web version works
 
-### Read the docs
+The web version is meant as a more visual way to understand the product. Instead of working directly in a spreadsheet, the user can picture an experience centered on:
 
-- [Getting started](./docs/getting-started.md)
-- [System overview](./docs/system-overview.md)
-- [Repository structure](./docs/repository-structure.md)
-- [Roadmap](./docs/roadmap.md)
-
-## ⚙️ How the product works
-
-### `excel-engine`
-
-This is the workbook-oriented layer:
-
-- generation
-- validation
-- formula maintenance
-- Excel 2016 compatibility
-
-### `api`
-
-This supports the application logic:
-
-- users
-- exercises and variants
-- routines
-- sessions
-- history
-- suggestions
-- volume
-
-### `web-app`
-
-This is the more visual face of the system:
-
-- user access
-- routine view
-- workout logging
 - progress dashboard
+- exercise tracking
+- session history
+- easier reading of weekly performance
+
+The published link shows that product idea directly, without requiring any installation.
 
 ## 🗺️ Project status
 
-The technical base already exists and the product direction is clear: offer a structured way to track training through both Excel and a more visual web interface. The repository is meant to show what the system does, how it is organized, and why it can be useful.
+The public repository is intended to be a simple product showcase: Excel file, functional explanation, and visual access to the web demo.
 
 ## 📌 Why someone would want it
 
