@@ -715,7 +715,11 @@ export function DashboardClient() {
   );
   const latestMeasurement = measurements[0] ?? null;
   const latestKnownWeight = latestMeasurement?.weight_kg ?? null;
-  const harrisResult = useMemo(() => getHarrisBenedictResult(harrisDraft, latestKnownWeight), [harrisDraft, latestKnownWeight]);
+  const latestKnownWaist = latestMeasurement?.waist_cm ?? null;
+  const harrisResult = useMemo(
+    () => getHarrisBenedictResult(harrisDraft, latestKnownWeight, latestKnownWaist),
+    [harrisDraft, latestKnownWaist, latestKnownWeight]
+  );
   const measurementTrend = performanceSnapshot.weightTrend;
   const volumeTrend = performanceSnapshot.sessionVolumeTrend;
   const rirTrend = performanceSnapshot.sessionRirTrend;
@@ -1752,6 +1756,20 @@ export function DashboardClient() {
                 </small>
               </label>
               <label className="field">
+                <span>Cintura cm</span>
+                <input
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, waistCm: event.target.value })}
+                  placeholder={latestKnownWaist ? `${formatDecimal(latestKnownWaist)} cm de tu ultimo registro` : "Cintura a la altura del ombligo"}
+                  type="number"
+                  value={harrisDraft.waistCm}
+                />
+                <small className="field-hint">
+                  {latestKnownWaist
+                    ? `Si lo dejas vacio, usamos ${formatDecimal(latestKnownWaist)} cm de tu ultima medicion para estimar grasa corporal.`
+                    : "Con la cintura podemos estimar grasa corporal de forma aproximada, aunque puede desviarse."}
+                </small>
+              </label>
+              <label className="field">
                 <span>Nivel de actividad</span>
                 <select
                   onChange={(event) => setHarrisDraft({ ...harrisDraft, activity: event.target.value as HarrisDraft["activity"] })}
@@ -1806,12 +1824,12 @@ export function DashboardClient() {
                   <div className="calculator-metric-card">
                     <span>Proteina</span>
                     <strong>{Math.round(harrisResult.proteinGrams)} g</strong>
-                    <small>Base diaria para sostener masa muscular.</small>
+                    <small>{formatDecimal(harrisResult.proteinPerKg)} g/kg · {harrisResult.guidance.proteinRange}</small>
                   </div>
                   <div className="calculator-metric-card">
                     <span>Grasas</span>
                     <strong>{Math.round(harrisResult.fatGrams)} g</strong>
-                    <small>Minimo recomendado para hormonas y salud.</small>
+                    <small>{formatDecimal(harrisResult.fatPerKg)} g/kg · equilibrio hormonal y saciedad.</small>
                   </div>
                   <div className="calculator-metric-card">
                     <span>Carbohidratos</span>
@@ -1826,6 +1844,42 @@ export function DashboardClient() {
                     <small>
                       {Math.round(harrisResult.heightCm)} cm · factor {harrisResult.activity.factor.toFixed(3)}.
                     </small>
+                  </div>
+                </div>
+                <div className="calculator-results-grid">
+                  <div className="calculator-metric-card">
+                    <span>Grasa estimada</span>
+                    <strong>
+                      {harrisResult.bodyFatPercentEstimate !== null ? `${formatDecimal(harrisResult.bodyFatPercentEstimate)} %` : "--"}
+                    </strong>
+                    <small>{harrisResult.guidance.bodyFatEstimate}</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Masa magra</span>
+                    <strong>{harrisResult.leanMassKg !== null ? `${formatDecimal(harrisResult.leanMassKg)} kg` : "--"}</strong>
+                    <small>Estimacion de tejido libre de grasa.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Masa grasa</span>
+                    <strong>{harrisResult.fatMassKg !== null ? `${formatDecimal(harrisResult.fatMassKg)} kg` : "--"}</strong>
+                    <small>Estimacion de grasa total corporal.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Cintura/altura</span>
+                    <strong>
+                      {harrisResult.waistToHeightRatio !== null ? formatDecimal(harrisResult.waistToHeightRatio) : "--"}
+                    </strong>
+                    <small>{harrisResult.guidance.waistToHeight}</small>
+                  </div>
+                </div>
+                <div className="calculator-guidance-grid">
+                  <div className="calculator-guidance-card">
+                    <strong>Lectura de carbohidratos</strong>
+                    <p>{harrisResult.guidance.carbsFocus}</p>
+                  </div>
+                  <div className="calculator-guidance-card">
+                    <strong>Lectura de grasas</strong>
+                    <p>{harrisResult.guidance.fatFocus}</p>
                   </div>
                 </div>
                 <p className="calculator-note">

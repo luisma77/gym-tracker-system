@@ -78,11 +78,16 @@ Muestra:
 - IMC
 - rango de peso saludable estimado
 - distribución diaria estimada de proteína, grasas y carbohidratos
+- proteína personalizada entre 1,3 y 2,0 g/kg según sexo, actividad y objetivo
+- grasa corporal estimada por cintura, altura y sexo
+- masa magra estimada, masa grasa estimada y ratio cintura-altura
 
 Detalles de implementación:
 
 - el cálculo vive en `src/lib/harris-benedict.ts`
 - el dashboard reutiliza el último peso corporal guardado cuando el usuario deja el campo de peso vacío
+- el dashboard reutiliza también la última cintura guardada si no se rellena ese campo
+- la grasa estimada se presenta con aviso explícito de que es una estimación antropométrica y puede desviarse
 - hay test automatizado en `tests/harris-benedict.test.ts`
 
 ## Exportes actuales
