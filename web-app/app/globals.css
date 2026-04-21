@@ -686,6 +686,14 @@ main {
   stroke: #7c3aed;
 }
 
+.chart-line.frequency {
+  stroke: #2563eb;
+}
+
+.chart-line.top-progress {
+  stroke: #0f766e;
+}
+
 .chart-labels {
   display: flex;
   gap: 12px;

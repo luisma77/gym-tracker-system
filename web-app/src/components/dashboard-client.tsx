@@ -10,13 +10,12 @@ import {
   fetchExercises,
   fetchMeasurements,
   fetchSessions,
-  signOutUser,
   type BodyMeasurement,
   type DashboardSummary,
   type Exercise,
   type WorkoutSession,
 } from "@/lib/api";
-import { clearAuthSession, getAuthToken, getStoredUser } from "@/lib/auth-storage";
+import { getAuthToken, getStoredUser } from "@/lib/auth-storage";
 import { dayTemplates } from "@/lib/day-templates";
 import { seedExercises, type SeedExercise } from "@/lib/exercise-seed";
 import { buildPerformanceSnapshot } from "@/lib/performance-report";
@@ -1010,15 +1009,6 @@ export function DashboardClient() {
     }
   }
 
-  async function handleLogout() {
-    try {
-      await signOutUser();
-    } finally {
-      clearAuthSession();
-      router.replace("/login");
-    }
-  }
-
   if (loading) {
     return (
       <main>
@@ -1044,18 +1034,14 @@ export function DashboardClient() {
           <button className="button primary" onClick={() => setActiveTab("workout")} type="button">
             Registrar sesion
           </button>
-          <a
-            className="button secondary"
-            href="https://github.com/luisma77/gym-tracker-system/raw/main/excel/Gym_Tracker.xlsx"
-            target="_blank"
-          >
-            Descargar Excel
-          </a>
-          <a className="button secondary" href="/settings">
-            Perfil y ajustes
-          </a>
-          <button className="button secondary" onClick={handleLogout} type="button">
-            Cerrar sesion
+          <button className="button secondary" onClick={downloadBaseExcel} type="button">
+            Descargar Excel base
+          </button>
+          <button className="button secondary" onClick={() => downloadPerformanceWorkbook(sessions, measurements)} type="button">
+            Informe Excel
+          </button>
+          <button className="button secondary" onClick={() => downloadPerformancePdf(sessions, measurements)} type="button">
+            Informe PDF
           </button>
         </div>
       </section>
@@ -1124,7 +1110,52 @@ export function DashboardClient() {
                 <strong>Total sesiones</strong>
                 <span>{summary?.total_sessions ?? sessions.length}</span>
               </div>
+              <div>
+                <strong>Volumen total</strong>
+                <span>{performanceSnapshot.totalVolumeKg.toFixed(1)} kg</span>
+              </div>
+              <div>
+                <strong>RIR medio</strong>
+                <span>{performanceSnapshot.averageSessionRir.toFixed(2)}</span>
+              </div>
+              <div>
+                <strong>Peso actual</strong>
+                <span>
+                  {performanceSnapshot.latestWeightKg === null
+                    ? "--"
+                    : `${performanceSnapshot.latestWeightKg.toFixed(1)} kg`}
+                </span>
+              </div>
+              <div>
+                <strong>Cambio de peso</strong>
+                <span>
+                  {performanceSnapshot.weightDeltaKg === null
+                    ? "--"
+                    : `${performanceSnapshot.weightDeltaKg > 0 ? "+" : ""}${performanceSnapshot.weightDeltaKg.toFixed(1)} kg`}
+                </span>
+              </div>
             </div>
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Mayor progreso</span>
+            <h2>Tu ejercicio que más ha progresado</h2>
+            {performanceSnapshot.bestImprovement ? (
+              <div className="session-item">
+                <strong>{performanceSnapshot.bestImprovement.exerciseName}</strong>
+                <p>{performanceSnapshot.bestImprovement.muscleGroup}</p>
+                <p>
+                  e1RM inicial {performanceSnapshot.bestImprovement.startEstimatedRm.toFixed(1)} kg · actual{" "}
+                  {performanceSnapshot.bestImprovement.latestEstimatedRm.toFixed(1)} kg
+                </p>
+                <p>
+                  Mejora {performanceSnapshot.bestImprovement.deltaKg.toFixed(1)} kg ·{" "}
+                  {performanceSnapshot.bestImprovement.deltaPercent.toFixed(1)}%
+                </p>
+              </div>
+            ) : (
+              <p>Necesitas al menos dos exposiciones del mismo ejercicio para detectar el mayor progreso.</p>
+            )}
           </article>
 
           <article className="card stack">
@@ -1208,13 +1239,6 @@ export function DashboardClient() {
                 </select>
               </label>
               <label className="field">
-                <span>Titulo</span>
-                <input disabled value={draft.title} />
-              </label>
-            </div>
-
-            <div className="grid split compact-split">
-              <label className="field">
                 <span>Semana</span>
                 <select
                   onChange={(event) => setDraft((current) => ({ ...current, weekNumber: Number(event.target.value) || 1 }))}
@@ -1227,10 +1251,13 @@ export function DashboardClient() {
                   ))}
                 </select>
               </label>
-              <div className="session-day-chip">
-                <strong>{draft.trainingDay}</strong>
-                <span>Bloque {blockType === "FUE" ? "Fuerza" : "Hipertrofia"} · max 5 series por ejercicio</span>
-              </div>
+            </div>
+
+            <div className="session-day-chip">
+              <strong>{draft.trainingDay}</strong>
+              <span>
+                {draft.title} · Bloque {blockType === "FUE" ? "Fuerza" : "Hipertrofia"} · max 5 series por ejercicio
+              </span>
             </div>
 
             <div className="template-sheet-shell">
@@ -1663,6 +1690,67 @@ export function DashboardClient() {
                   ))}
                 </div>
               </div>
+            )}
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Frecuencia</span>
+            <h2>Sesiones por mes</h2>
+            {frequencyTrend.length < 2 ? (
+              <p>Necesitas al menos dos meses con sesiones para ver una tendencia de frecuencia.</p>
+            ) : (
+              <div className="chart-shell">
+                <svg className="chart-svg" viewBox="0 0 360 180">
+                  <path className="chart-line frequency" d={buildLinePath(frequencyTrend.map((item) => item.value))} />
+                </svg>
+                <div className="chart-labels">
+                  {frequencyTrend.map((item) => (
+                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Mejor ejercicio</span>
+            <h2>e1RM del ejercicio con más progreso</h2>
+            {topExerciseTrend.length < 2 ? (
+              <p>Necesitas al menos dos registros del mismo ejercicio para dibujar esta evolución.</p>
+            ) : (
+              <div className="chart-shell">
+                <svg className="chart-svg" viewBox="0 0 360 180">
+                  <path className="chart-line top-progress" d={buildLinePath(topExerciseTrend.map((item) => item.value))} />
+                </svg>
+                <div className="chart-labels">
+                  {topExerciseTrend.map((item) => (
+                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Ranking</span>
+            <h2>Top ejercicios con mejor evolución</h2>
+            {performanceSnapshot.topImprovements.length === 0 ? (
+              <p>Todavía no hay suficientes repeticiones históricas del mismo ejercicio para comparar progreso.</p>
+            ) : (
+              performanceSnapshot.topImprovements.map((item, index) => (
+                <div className="session-item" key={`${item.exerciseId}-${item.lastDate}`}>
+                  <strong>
+                    {index + 1}. {item.exerciseName}
+                  </strong>
+                  <p>{item.muscleGroup}</p>
+                  <p>
+                    e1RM {item.startEstimatedRm.toFixed(1)} → {item.latestEstimatedRm.toFixed(1)} kg
+                  </p>
+                  <p>
+                    {item.deltaKg.toFixed(1)} kg · {item.deltaPercent.toFixed(1)}%
+                  </p>
+                </div>
+              ))
             )}
           </article>
         </section>
