@@ -442,12 +442,101 @@ main {
 }
 
 .dashboard-panels {
-  align-items: start;
+  align-items: flex-start;
+}
+
+.overview-layout {
+  gap: 22px;
+}
+
+.overview-top-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+}
+
+.overview-bottom-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.measurements-top-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+}
+
+.overview-highlight-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.overview-summary-card {
+  background: linear-gradient(180deg, rgba(255, 253, 250, 0.94), rgba(240, 247, 245, 0.9));
+}
+
+.overview-summary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.overview-summary-header p {
+  max-width: 42ch;
+}
+
+.overview-summary-highlight {
+  min-width: 180px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.overview-summary-highlight strong,
+.overview-summary-highlight span {
+  display: block;
+}
+
+.overview-summary-highlight span {
+  margin-top: 6px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.overview-stats-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.overview-stat-tile {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 253, 250, 0.9);
+}
+
+.overview-stat-tile strong,
+.overview-stat-tile span {
+  display: block;
+}
+
+.overview-stat-tile span {
+  margin-top: 6px;
+  font-size: 1.1rem;
 }
 
 .summary-list {
   display: grid;
   gap: 14px;
+}
+
+.summary-list.compact {
+  gap: 12px;
 }
 
 .summary-list div {
@@ -457,10 +546,36 @@ main {
   background: rgba(240, 231, 216, 0.28);
 }
 
+.compact-summary-card {
+  display: grid;
+  gap: 6px;
+}
+
 .summary-list strong,
 .exercise-group strong {
   display: block;
   margin-bottom: 4px;
+}
+
+.insight-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.insight-stat-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+}
+
+.compact-copy {
+  font-size: 0.98rem;
+}
+
+.radar-block {
+  display: grid;
+  gap: 12px;
 }
 
 .workout-builder {
@@ -617,6 +732,10 @@ main {
   gap: 12px;
 }
 
+.volume-status-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .volume-status-card {
   padding: 14px 16px;
   border: 1px solid var(--line);
@@ -634,6 +753,10 @@ main {
   color: var(--muted);
 }
 
+.volume-status-card.compact {
+  padding: 12px 14px;
+}
+
 .volume-status-header {
   display: flex;
   align-items: center;
@@ -647,6 +770,10 @@ main {
   gap: 12px;
 }
 
+.muscle-phase-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .muscle-phase-card {
   padding: 14px 16px;
   border: 1px solid var(--line);
@@ -656,6 +783,10 @@ main {
 
 .muscle-phase-card p {
   margin-top: 8px;
+}
+
+.muscle-phase-card.compact {
+  padding: 12px 14px;
 }
 
 .muscle-phase-header {
@@ -689,6 +820,10 @@ main {
 .status-badge.alto {
   background: rgba(180, 35, 24, 0.12);
   color: #8f1d14;
+}
+
+.session-item.compact p {
+  margin-top: 4px;
 }
 
 .suggestion-list {
@@ -1099,6 +1234,20 @@ main {
     padding-top: 32px;
   }
 
+  .overview-top-grid,
+  .overview-bottom-grid,
+  .overview-highlight-grid,
+  .measurements-top-grid,
+  .volume-status-grid.compact,
+  .muscle-phase-grid.compact,
+  .overview-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-summary-header {
+    display: grid;
+  }
+
   .hero h1 {
     font-size: 2.5rem;
   }
@@ -1134,6 +1283,16 @@ main {
 @media (max-width: 900px) {
   .site-header-inner,
   .site-footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-top-grid,
+  .measurements-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-highlight-grid,
+  .overview-bottom-grid {
     grid-template-columns: 1fr;
   }
 

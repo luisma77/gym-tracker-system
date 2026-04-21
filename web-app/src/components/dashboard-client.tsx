@@ -781,6 +781,10 @@ export function DashboardClient() {
       return { group, phase, stale };
     });
   }, [exercises, progressByExercise, sessions]);
+  const visibleMuscleSummary = muscleSummary.slice(0, 6);
+  const hiddenMuscleCount = Math.max(0, muscleSummary.length - visibleMuscleSummary.length);
+  const visibleWeeklyVolume = weeklyVolumeByGroup.slice(0, 6);
+  const hiddenVolumeCount = Math.max(0, weeklyVolumeByGroup.length - visibleWeeklyVolume.length);
 
   const addHints = useMemo(() => getDayAddHints(dayKind, draft.rows, exercisesById), [dayKind, draft.rows, exercisesById]);
 
@@ -1112,199 +1116,215 @@ export function DashboardClient() {
       </div>
 
       {activeTab === "overview" ? (
-        <section className="grid split dashboard-panels">
-          <article className="card stack">
-            <span className="pill">Resumen rapido</span>
-            <h2>Hola, {user?.full_name ?? "atleta"}</h2>
-            <div className="summary-list">
-              <div>
-                <strong>Bloque actual</strong>
-                <span>{blockType === "FUE" ? "Fuerza" : "Hipertrofia"}</span>
+        <section className="stack dashboard-panels overview-layout">
+          <div className="overview-top-grid">
+            <article className="card stack overview-summary-card">
+              <span className="pill">Resumen rapido</span>
+              <div className="overview-summary-header">
+                <div>
+                  <h2>Hola, {user?.full_name ?? "atleta"}</h2>
+                  <p>Lectura rápida de bloque, progreso corporal y estado actual de la planificación.</p>
+                </div>
+                <div className="overview-summary-highlight">
+                  <strong>Siguiente dia</strong>
+                  <span>{draft.trainingDay}</span>
+                </div>
               </div>
-              <div>
-                <strong>Semana</strong>
-                <span>{currentWeek} / 12</span>
+              <div className="overview-stats-grid">
+                <div className="overview-stat-tile">
+                  <strong>Bloque actual</strong>
+                  <span>{blockType === "FUE" ? "Fuerza" : "Hipertrofia"}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Semana</strong>
+                  <span>{currentWeek} / 12</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Total sesiones</strong>
+                  <span>{summary?.total_sessions ?? sessions.length}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Volumen total</strong>
+                  <span>{performanceSnapshot.totalVolumeKg.toFixed(1)} kg</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>RIR medio</strong>
+                  <span>{performanceSnapshot.averageSessionRir.toFixed(2)}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Peso actual</strong>
+                  <span>
+                    {performanceSnapshot.latestWeightKg === null ? "--" : `${performanceSnapshot.latestWeightKg.toFixed(1)} kg`}
+                  </span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Cambio de peso</strong>
+                  <span>
+                    {performanceSnapshot.weightDeltaKg === null
+                      ? "--"
+                      : `${performanceSnapshot.weightDeltaKg > 0 ? "+" : ""}${performanceSnapshot.weightDeltaKg.toFixed(1)} kg`}
+                  </span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Racha activa</strong>
+                  <span>{performanceSnapshot.adherenceStreakWeeks} semanas</span>
+                </div>
               </div>
-              <div>
-                <strong>Siguiente dia</strong>
-                <span>{draft.trainingDay}</span>
-              </div>
-              <div>
-                <strong>Total sesiones</strong>
-                <span>{summary?.total_sessions ?? sessions.length}</span>
-              </div>
-              <div>
-                <strong>Volumen total</strong>
-                <span>{performanceSnapshot.totalVolumeKg.toFixed(1)} kg</span>
-              </div>
-              <div>
-                <strong>RIR medio</strong>
-                <span>{performanceSnapshot.averageSessionRir.toFixed(2)}</span>
-              </div>
-              <div>
-                <strong>Peso actual</strong>
-                <span>
-                  {performanceSnapshot.latestWeightKg === null
-                    ? "--"
-                    : `${performanceSnapshot.latestWeightKg.toFixed(1)} kg`}
-                </span>
-              </div>
-              <div>
-                <strong>Cambio de peso</strong>
-                <span>
-                  {performanceSnapshot.weightDeltaKg === null
-                    ? "--"
-                    : `${performanceSnapshot.weightDeltaKg > 0 ? "+" : ""}${performanceSnapshot.weightDeltaKg.toFixed(1)} kg`}
-                </span>
-              </div>
-              <div>
-                <strong>Racha activa</strong>
-                <span>{performanceSnapshot.adherenceStreakWeeks} semanas</span>
-              </div>
-            </div>
-          </article>
+            </article>
 
-          <article className="card stack">
-            <span className="pill">Mayor progreso</span>
-            <h2>Tu ejercicio que más ha progresado</h2>
-            {performanceSnapshot.bestImprovement ? (
-              <div className="session-item">
-                <strong>{performanceSnapshot.bestImprovement.exerciseName}</strong>
-                <p>{performanceSnapshot.bestImprovement.muscleGroup}</p>
-                <p>
-                  e1RM inicial {performanceSnapshot.bestImprovement.startEstimatedRm.toFixed(1)} kg · actual{" "}
-                  {performanceSnapshot.bestImprovement.latestEstimatedRm.toFixed(1)} kg
-                </p>
-                <p>
-                  Mejora {performanceSnapshot.bestImprovement.deltaKg.toFixed(1)} kg ·{" "}
-                  {performanceSnapshot.bestImprovement.deltaPercent.toFixed(1)}%
-                </p>
-              </div>
-            ) : (
-              <p>Necesitas al menos dos exposiciones del mismo ejercicio para detectar el mayor progreso.</p>
-            )}
-          </article>
+            <div className="overview-highlight-grid">
+              <article className="card stack">
+                <span className="pill">Mayor progreso</span>
+                <h2>Tu ejercicio que más ha progresado</h2>
+                {performanceSnapshot.bestImprovement ? (
+                  <div className="insight-panel">
+                    <strong>{performanceSnapshot.bestImprovement.exerciseName}</strong>
+                    <p>{performanceSnapshot.bestImprovement.muscleGroup}</p>
+                    <div className="insight-stat-line">
+                      <span>Inicio {performanceSnapshot.bestImprovement.startEstimatedRm.toFixed(1)} kg</span>
+                      <span>Ahora {performanceSnapshot.bestImprovement.latestEstimatedRm.toFixed(1)} kg</span>
+                    </div>
+                    <p>
+                      Mejora {performanceSnapshot.bestImprovement.deltaKg.toFixed(1)} kg ·{" "}
+                      {performanceSnapshot.bestImprovement.deltaPercent.toFixed(1)}%
+                    </p>
+                  </div>
+                ) : (
+                  <p>Necesitas al menos dos exposiciones del mismo ejercicio para detectar el mayor progreso.</p>
+                )}
+              </article>
 
-          <article className="card stack">
-            <span className="pill">Ejercicio favorito</span>
-            <h2>El movimiento que más has hecho y consolidado</h2>
-            {performanceSnapshot.favoriteExercise ? (
-              <div className="session-item">
-                <strong>{performanceSnapshot.favoriteExercise.exerciseName}</strong>
-                <p>{performanceSnapshot.favoriteExercise.muscleGroup}</p>
-                <p>
-                  {performanceSnapshot.favoriteExercise.timesPerformed} exposiciones ·{" "}
-                  {performanceSnapshot.favoriteExercise.totalSets} series
-                </p>
-                <p>{performanceSnapshot.favoriteExercise.reason}</p>
-              </div>
-            ) : (
-              <p>Todavía no hay suficientes datos para detectar tu ejercicio favorito.</p>
-            )}
-          </article>
+              <article className="card stack">
+                <span className="pill">Ejercicio favorito</span>
+                <h2>El movimiento que más has hecho y consolidado</h2>
+                {performanceSnapshot.favoriteExercise ? (
+                  <div className="insight-panel">
+                    <strong>{performanceSnapshot.favoriteExercise.exerciseName}</strong>
+                    <p>{performanceSnapshot.favoriteExercise.muscleGroup}</p>
+                    <div className="insight-stat-line">
+                      <span>
+                        {performanceSnapshot.favoriteExercise.timesPerformed} exposiciones
+                      </span>
+                      <span>{performanceSnapshot.favoriteExercise.totalSets} series</span>
+                    </div>
+                    <p className="compact-copy">
+                      {performanceSnapshot.favoriteExercise.reason}
+                    </p>
+                  </div>
+                ) : (
+                  <p>Todavía no hay suficientes datos para detectar tu ejercicio favorito.</p>
+                )}
+              </article>
 
-          <article className="card stack">
-            <span className="pill">Músculos</span>
-            <h2>Tu grupo estrella y tu grupo rezagado</h2>
-            <div className="summary-list">
-              <div>
-                <strong>Grupo estrella</strong>
-                <span>{performanceSnapshot.starMuscle?.muscleGroup ?? "--"}</span>
-                <small>{performanceSnapshot.starMuscle?.reason ?? "Sin datos suficientes."}</small>
-              </div>
-              <div>
-                <strong>Grupo rezagado</strong>
-                <span>{performanceSnapshot.laggingMuscle?.muscleGroup ?? "--"}</span>
-                <small>{performanceSnapshot.laggingMuscle?.reason ?? "Sin datos suficientes."}</small>
-              </div>
-            </div>
-          </article>
+              <article className="card stack">
+                <span className="pill">Músculos</span>
+                <h2>Tu grupo estrella y tu grupo rezagado</h2>
+                <div className="summary-list compact">
+                  <div className="compact-summary-card">
+                    <strong>Grupo estrella</strong>
+                    <span>{performanceSnapshot.starMuscle?.muscleGroup ?? "--"}</span>
+                    <small>{performanceSnapshot.starMuscle?.reason ?? "Sin datos suficientes."}</small>
+                  </div>
+                  <div className="compact-summary-card">
+                    <strong>Grupo rezagado</strong>
+                    <span>{performanceSnapshot.laggingMuscle?.muscleGroup ?? "--"}</span>
+                    <small>{performanceSnapshot.laggingMuscle?.reason ?? "Sin datos suficientes."}</small>
+                  </div>
+                </div>
+              </article>
 
-          <article className="card stack">
-            <span className="pill">Récords</span>
-            <h2>Marcas destacadas</h2>
-            <div className="summary-list">
-              <div>
-                <strong>Serie más pesada</strong>
-                <span>
-                  {performanceSnapshot.personalRecords.heaviestSet
-                    ? `${performanceSnapshot.personalRecords.heaviestSet.exerciseName} · ${performanceSnapshot.personalRecords.heaviestSet.value.toFixed(1)} kg`
-                    : "--"}
-                </span>
-              </div>
-              <div>
-                <strong>Mejor e1RM</strong>
-                <span>
-                  {performanceSnapshot.personalRecords.bestEstimatedRm
-                    ? `${performanceSnapshot.personalRecords.bestEstimatedRm.exerciseName} · ${performanceSnapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} kg`
-                    : "--"}
-                </span>
-              </div>
-              <div>
-                <strong>Sesión con más volumen</strong>
-                <span>
-                  {performanceSnapshot.personalRecords.highestVolumeSession
-                    ? `${performanceSnapshot.personalRecords.highestVolumeSession.sessionTitle} · ${performanceSnapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
-                    : "--"}
-                </span>
-              </div>
-            </div>
-          </article>
-
-          <article className="card stack">
-            <span className="pill">Fase por musculo</span>
-            <h2>En que fase vas ahora</h2>
-            <div className="muscle-phase-grid">
-              {muscleSummary.map((item) => (
-                <div className="muscle-phase-card" key={item.group}>
-                  <div className="muscle-phase-header">
-                    <strong>{item.group}</strong>
-                    <span className={`status-badge ${item.stale ? "bajo" : "optimo"}`}>
-                      {item.stale ? "2 sesiones sin tocar" : "Activo"}
+              <article className="card stack">
+                <span className="pill">Récords</span>
+                <h2>Marcas destacadas</h2>
+                <div className="summary-list compact">
+                  <div className="compact-summary-card">
+                    <strong>Serie más pesada</strong>
+                    <span>
+                      {performanceSnapshot.personalRecords.heaviestSet
+                        ? `${performanceSnapshot.personalRecords.heaviestSet.exerciseName} · ${performanceSnapshot.personalRecords.heaviestSet.value.toFixed(1)} kg`
+                        : "--"}
                     </span>
                   </div>
-                  <p>{item.phase}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="card stack">
-            <span className="pill">Volumen semanal</span>
-            <h2>Bajo, optimo o alto por grupo</h2>
-            <div className="volume-status-grid">
-              {weeklyVolumeByGroup.map((item) => (
-                <div className="volume-status-card" key={item.group}>
-                  <div className="volume-status-header">
-                    <strong>{item.group}</strong>
-                    <span className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</span>
+                  <div className="compact-summary-card">
+                    <strong>Mejor e1RM</strong>
+                    <span>
+                      {performanceSnapshot.personalRecords.bestEstimatedRm
+                        ? `${performanceSnapshot.personalRecords.bestEstimatedRm.exerciseName} · ${performanceSnapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} kg`
+                        : "--"}
+                    </span>
                   </div>
-                  <p>{item.weeklySets} series esta semana</p>
-                  <small>
-                    Objetivo: {item.target.min}-{item.target.max} series
-                  </small>
+                  <div className="compact-summary-card">
+                    <strong>Sesión con más volumen</strong>
+                    <span>
+                      {performanceSnapshot.personalRecords.highestVolumeSession
+                        ? `${performanceSnapshot.personalRecords.highestVolumeSession.sessionTitle} · ${performanceSnapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
+                        : "--"}
+                    </span>
+                  </div>
                 </div>
-              ))}
+              </article>
             </div>
-          </article>
+          </div>
 
-          <article className="card stack">
-            <span className="pill">Ultimas sesiones</span>
-            <h2>Historial corto</h2>
-            {sessions.length === 0 ? (
-              <p>Aun no hay sesiones guardadas.</p>
-            ) : (
-              sessions.slice(0, 5).map((session) => (
-                <div className="session-item" key={session.id}>
-                  <strong>{session.title}</strong>
-                  <p>
-                    {session.training_day} · Semana {session.week_number} · {formatDate(session.created_at)}
-                  </p>
-                  <p>RIR medio: {formatDecimal(getAverageSessionRir(session))}</p>
+          <div className="overview-bottom-grid">
+            <article className="card stack">
+              <span className="pill">Estado muscular</span>
+              <h2>Lo importante ahora</h2>
+              <div className="muscle-phase-grid compact">
+                {visibleMuscleSummary.map((item) => (
+                  <div className="muscle-phase-card compact" key={item.group}>
+                    <div className="muscle-phase-header">
+                      <strong>{item.group}</strong>
+                      <span className={`status-badge ${item.stale ? "bajo" : "optimo"}`}>
+                        {item.stale ? "2 sesiones sin tocar" : "Activo"}
+                      </span>
+                    </div>
+                    <p>{item.phase}</p>
+                  </div>
+                ))}
+              </div>
+              {hiddenMuscleCount > 0 ? <p className="compact-copy">Y {hiddenMuscleCount} grupos más en el detalle completo.</p> : null}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Radar semanal</span>
+              <h2>Volumen y últimas sesiones</h2>
+              <div className="radar-block">
+                <strong>Volumen por grupo</strong>
+                <div className="volume-status-grid compact">
+                  {visibleWeeklyVolume.map((item) => (
+                    <div className="volume-status-card compact" key={item.group}>
+                      <div className="volume-status-header">
+                        <strong>{item.group}</strong>
+                        <span className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</span>
+                      </div>
+                      <p>{item.weeklySets} series</p>
+                      <small>
+                        Objetivo {item.target.min}-{item.target.max}
+                      </small>
+                    </div>
+                  ))}
                 </div>
-              ))
-            )}
-          </article>
+                {hiddenVolumeCount > 0 ? <p className="compact-copy">Y {hiddenVolumeCount} grupos más en el panel completo.</p> : null}
+              </div>
+              <div className="radar-block">
+                <strong>Últimas sesiones</strong>
+                {sessions.length === 0 ? (
+                  <p>Aun no hay sesiones guardadas.</p>
+                ) : (
+                  sessions.slice(0, 3).map((session) => (
+                    <div className="session-item compact" key={session.id}>
+                      <strong>{session.title}</strong>
+                      <p>
+                        {session.training_day} · Semana {session.week_number}
+                      </p>
+                      <p>{formatDate(session.created_at)} · RIR {formatDecimal(getAverageSessionRir(session))}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </article>
+          </div>
         </section>
       ) : null}
 
@@ -1624,7 +1644,8 @@ export function DashboardClient() {
       ) : null}
 
       {activeTab === "measurements" ? (
-        <section className="grid split dashboard-panels">
+        <section className="stack dashboard-panels measurements-layout">
+          <div className="measurements-top-grid">
           <article className="card stack">
             <span className="pill">Medidas corporales</span>
             <h2>Registrar progreso fisico</h2>
@@ -1894,6 +1915,7 @@ export function DashboardClient() {
               </p>
             )}
           </article>
+          </div>
 
           <article className="card stack">
             <span className="pill">Ultimos registros</span>
