@@ -204,13 +204,36 @@ async function resolveLoginEmail(identifier: string) {
   });
 
   if (error) {
-    if (
+    const missingRpc =
       error.message.toLowerCase().includes("function") ||
-      error.message.toLowerCase().includes("resolve_login_identifier")
-    ) {
-      throw new ApiRequestError(
-        "Falta aplicar la migración de Supabase para iniciar sesión con nombre de usuario."
-      );
+      error.message.toLowerCase().includes("resolve_login_identifier");
+
+    if (missingRpc) {
+      const fallback = await db()
+        .from("profiles")
+        .select("email")
+        .ilike("username", normalized)
+        .maybeSingle();
+
+      if (fallback.error) {
+        const missingUsernameColumn =
+          fallback.error.message.includes("username") &&
+          fallback.error.message.toLowerCase().includes("column");
+
+        if (missingUsernameColumn) {
+          throw new ApiRequestError(
+            "Falta aplicar la migración de Supabase para iniciar sesión con nombre de usuario."
+          );
+        }
+
+        throw new ApiRequestError(fallback.error.message);
+      }
+
+      if (!fallback.data?.email) {
+        throw new ApiRequestError("No existe ninguna cuenta con ese email o nombre de usuario.");
+      }
+
+      return String(fallback.data.email).trim().toLowerCase();
     }
 
     throw new ApiRequestError(error.message);

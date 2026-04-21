@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { ApiRequestError, loginUser, registerUser, signInWithProvider } from "@/lib/api";
+import { useAuthUser } from "@/hooks/use-auth-user";
+import { ApiRequestError, loginUser, registerUser } from "@/lib/api";
 import { saveAuthSession } from "@/lib/auth-storage";
 
 type AuthClientFormProps = {
@@ -13,10 +14,10 @@ type AuthClientFormProps = {
 export function AuthClientForm({ mode }: AuthClientFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuthUser();
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<"" | "google" | "apple">("");
   const [passwordValue, setPasswordValue] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -38,6 +39,12 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
           ? "Correo confirmado. Ya puedes entrar con tu cuenta."
           : ""
       : "";
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [router, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,24 +102,6 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
     }
   }
 
-  async function handleOAuth(provider: "google" | "apple") {
-    setError("");
-    setSuccessMessage("");
-    setFieldErrors({});
-    setOauthLoading(provider);
-
-    try {
-      await signInWithProvider(provider);
-    } catch (oauthError) {
-      setError(
-        oauthError instanceof ApiRequestError
-          ? oauthError.message
-          : `No se ha podido iniciar con ${provider === "google" ? "Google" : "Apple"}.`
-      );
-      setOauthLoading("");
-    }
-  }
-
   return (
     <section className="auth-shell">
       <article className="card auth-card">
@@ -124,27 +113,6 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
             : "Crea tu cuenta para guardar rutinas, entrenamientos e historial. Recibirás un email de verificación antes de poder entrar."}
         </p>
         {externalNotice ? <p className="feedback success">{externalNotice}</p> : null}
-        <div className="oauth-stack">
-          <button
-            className="button secondary oauth-button"
-            disabled={Boolean(oauthLoading)}
-            onClick={() => handleOAuth("google")}
-            type="button"
-          >
-            {oauthLoading === "google" ? "Abriendo Google..." : "Continuar con Google"}
-          </button>
-          <button
-            className="button secondary oauth-button"
-            disabled={Boolean(oauthLoading)}
-            onClick={() => handleOAuth("apple")}
-            type="button"
-          >
-            {oauthLoading === "apple" ? "Abriendo Apple..." : "Continuar con Apple"}
-          </button>
-        </div>
-        <div className="form-divider">
-          <span>o sigue con email</span>
-        </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           {mode === "register" ? (
             <>

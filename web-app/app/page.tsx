@@ -1,4 +1,5 @@
 import { FeatureGrid } from "@/components/feature-grid";
+import { HomeHeroActions } from "@/components/home-hero-actions";
 
 const userBenefits = [
   "Sigue una organizacion real de 12 semanas orientada a PPL como en tu Excel.",
@@ -25,14 +26,7 @@ export default function Home() {
           con email verificado, guarda el historial en Supabase y mantiene una experiencia limpia
           tanto en móvil como en escritorio.
         </p>
-        <div className="hero-actions">
-          <a className="button primary" href="/register">
-            Crear cuenta
-          </a>
-          <a className="button secondary" href="/login">
-            Iniciar sesion
-          </a>
-        </div>
+        <HomeHeroActions />
       </section>
 
       <FeatureGrid />

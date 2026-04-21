@@ -1,45 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { clearAuthSession, getAuthStorageEventName, getStoredUser } from "@/lib/auth-storage";
+import { clearAuthSession } from "@/lib/auth-storage";
+import { useAuthUser } from "@/hooks/use-auth-user";
 import { signOutUser } from "@/lib/api";
-
-type StoredUser = {
-  email: string;
-  full_name: string;
-  username?: string;
-};
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<StoredUser | null>(null);
+  const { user } = useAuthUser();
   const isAuthed = Boolean(user);
-
-  useEffect(() => {
-    const refreshUser = () => setUser(getStoredUser<StoredUser>());
-    refreshUser();
-
-    window.addEventListener("storage", refreshUser);
-    window.addEventListener("focus", refreshUser);
-    window.addEventListener(getAuthStorageEventName(), refreshUser);
-
-    return () => {
-      window.removeEventListener("storage", refreshUser);
-      window.removeEventListener("focus", refreshUser);
-      window.removeEventListener(getAuthStorageEventName(), refreshUser);
-    };
-  }, [pathname]);
 
   async function handleLogout() {
     try {
       await signOutUser();
     } finally {
       clearAuthSession();
-      setUser(null);
       router.push("/login");
     }
   }

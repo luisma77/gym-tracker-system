@@ -19,6 +19,8 @@ import {
 import { clearAuthSession, getAuthToken, getStoredUser } from "@/lib/auth-storage";
 import { dayTemplates } from "@/lib/day-templates";
 import { seedExercises, type SeedExercise } from "@/lib/exercise-seed";
+import { buildPerformanceSnapshot } from "@/lib/performance-report";
+import { downloadBaseExcel, downloadPerformancePdf, downloadPerformanceWorkbook } from "@/lib/report-export";
 import { getSetGridTemplate } from "@/lib/session-layout";
 
 type StoredUser = {
@@ -700,22 +702,15 @@ export function DashboardClient() {
     return map;
   }, [blockType, exerciseHistory, exercises]);
 
-  const measurementTrend = [...measurements]
-    .reverse()
-    .filter((item) => item.weight_kg !== null)
-    .map((item) => ({ label: formatDate(item.measured_at), value: Number(item.weight_kg) }));
-
-  const volumeTrend = [...sessions]
-    .reverse()
-    .map((item) => ({ label: formatDate(item.created_at), value: getSessionVolume(item) }));
-
-  const rirTrend = [...sessions]
-    .reverse()
-    .filter((item) => item.sets.length > 0)
-    .map((item) => ({
-      label: formatDate(item.created_at),
-      value: Number(getAverageSessionRir(item).toFixed(1)),
-    }));
+  const performanceSnapshot = useMemo(
+    () => buildPerformanceSnapshot(sessions, measurements),
+    [measurements, sessions]
+  );
+  const measurementTrend = performanceSnapshot.weightTrend;
+  const volumeTrend = performanceSnapshot.sessionVolumeTrend;
+  const rirTrend = performanceSnapshot.sessionRirTrend;
+  const frequencyTrend = performanceSnapshot.sessionFrequencyTrend;
+  const topExerciseTrend = performanceSnapshot.topExerciseTrend;
 
   const currentWeekSessions = sessions.filter((session) => session.week_number === currentWeek);
 
