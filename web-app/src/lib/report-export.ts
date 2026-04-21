@@ -5,7 +5,15 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 import type { BodyMeasurement, WorkoutSession } from "@/lib/api";
-import { buildPerformanceSnapshot, formatReportDate, getAverageSessionRir, getSessionVolume } from "@/lib/performance-report";
+import {
+  buildPerformanceSnapshot,
+  formatReportDate,
+  getAverageSessionRir,
+  getSessionVolume,
+  type ExerciseReportRow,
+  type MuscleDistribution,
+  type TrendPoint,
+} from "@/lib/performance-report";
 
 function buildFileDateSuffix() {
   return new Date().toISOString().slice(0, 10);
@@ -18,6 +26,53 @@ function downloadBlob(blob: Blob, filename: string) {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function appendSheet(workbook: XLSX.WorkBook, name: string, rows: Array<Record<string, unknown>>) {
+  const sheet = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{ info: "Sin datos suficientes" }]);
+  XLSX.utils.book_append_sheet(workbook, sheet, name);
+}
+
+function getTrendArrow(row: ExerciseReportRow) {
+  if (row.trend === "up") {
+    return "↑";
+  }
+  if (row.trend === "down") {
+    return "↓";
+  }
+  return "→";
+}
+
+function buildReportConclusions(snapshot: ReturnType<typeof buildPerformanceSnapshot>) {
+  const conclusions = [
+    `Has registrado ${snapshot.totalSessions} sesiones, ${snapshot.totalSets} series y ${snapshot.totalWeeksTracked} semanas útiles.`,
+    `Tu volumen acumulado es de ${snapshot.totalVolumeKg.toFixed(1)} kg, con un RIR medio de ${snapshot.averageSessionRir.toFixed(2)}.`,
+    `La calidad actual de la muestra es ${snapshot.dataReadiness.replace("_", " ")} para sacar conclusiones.`,
+  ];
+
+  if (snapshot.bestImprovement) {
+    conclusions.push(
+      `Tu mayor progreso está en ${snapshot.bestImprovement.exerciseName}, con una mejora estimada del ${snapshot.bestImprovement.deltaPercent.toFixed(1)}%.`
+    );
+  }
+
+  if (snapshot.favoriteExercise) {
+    conclusions.push(snapshot.favoriteExercise.reason);
+  }
+
+  if (snapshot.starMuscle) {
+    conclusions.push(snapshot.starMuscle.reason);
+  }
+
+  if (snapshot.laggingMuscle && snapshot.laggingMuscle.muscleGroup !== snapshot.starMuscle?.muscleGroup) {
+    conclusions.push(snapshot.laggingMuscle.reason);
+  }
+
+  if (snapshot.adherenceStreakWeeks > 0) {
+    conclusions.push(`Llevas una racha de ${snapshot.adherenceStreakWeeks} semanas consecutivas con entrenamiento registrado.`);
+  }
+
+  return conclusions;
 }
 
 function drawLineChart(
@@ -80,35 +135,109 @@ function drawLineChart(
   return chartBottom + 12;
 }
 
-function buildReportConclusions(snapshot: ReturnType<typeof buildPerformanceSnapshot>) {
-  const conclusions = [
-    `Has registrado ${snapshot.totalSessions} sesiones y ${snapshot.totalSets} series en total.`,
-    `Tu volumen acumulado es de ${snapshot.totalVolumeKg.toFixed(1)} kg, con un RIR medio de ${snapshot.averageSessionRir.toFixed(2)}.`,
-  ];
+function createCanvas(width: number, height: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return null;
+  }
+  return { canvas, context };
+}
 
-  if (snapshot.bestImprovement) {
-    conclusions.push(
-      `Tu mayor progreso está en ${snapshot.bestImprovement.exerciseName}, con una mejora estimada del ${snapshot.bestImprovement.deltaPercent.toFixed(1)}%.`
-    );
+function buildDonutChartDataUrl(items: MuscleDistribution[]) {
+  if (typeof document === "undefined" || items.length === 0) {
+    return null;
   }
 
-  if (snapshot.favoriteExercise) {
-    conclusions.push(snapshot.favoriteExercise.reason);
+  const canvasBundle = createCanvas(560, 320);
+  if (!canvasBundle) {
+    return null;
   }
 
-  if (snapshot.starMuscle) {
-    conclusions.push(snapshot.starMuscle.reason);
+  const { canvas, context } = canvasBundle;
+  const palette = ["#0f766e", "#1d4ed8", "#c96a3d", "#8b5cf6", "#0f766e", "#7c3aed", "#b45309"];
+
+  context.fillStyle = "#fffdfa";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const centerX = 150;
+  const centerY = 160;
+  const radius = 90;
+  const innerRadius = 48;
+
+  let startAngle = -Math.PI / 2;
+  items.slice(0, 6).forEach((item, index) => {
+    const slice = (item.sharePercent / 100) * Math.PI * 2;
+    context.beginPath();
+    context.moveTo(centerX, centerY);
+    context.arc(centerX, centerY, radius, startAngle, startAngle + slice);
+    context.closePath();
+    context.fillStyle = palette[index % palette.length];
+    context.fill();
+    startAngle += slice;
+  });
+
+  context.beginPath();
+  context.fillStyle = "#fffdfa";
+  context.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#182026";
+  context.font = "700 18px Georgia";
+  context.fillText("Volumen", 115, 152);
+  context.fillText("muscular", 110, 176);
+
+  context.font = "600 16px Georgia";
+  items.slice(0, 6).forEach((item, index) => {
+    const y = 52 + index * 38;
+    context.fillStyle = palette[index % palette.length];
+    context.fillRect(286, y - 12, 16, 16);
+    context.fillStyle = "#182026";
+    context.fillText(`${item.muscleGroup} · ${item.sharePercent.toFixed(1)}%`, 314, y);
+  });
+
+  return canvas.toDataURL("image/png");
+}
+
+function buildBarChartDataUrl(title: string, items: ExerciseReportRow[]) {
+  if (typeof document === "undefined" || items.length === 0) {
+    return null;
   }
 
-  if (snapshot.laggingMuscle && snapshot.laggingMuscle.muscleGroup !== snapshot.starMuscle?.muscleGroup) {
-    conclusions.push(snapshot.laggingMuscle.reason);
+  const canvasBundle = createCanvas(720, 360);
+  if (!canvasBundle) {
+    return null;
   }
 
-  if (snapshot.adherenceStreakWeeks > 0) {
-    conclusions.push(`Llevas una racha de ${snapshot.adherenceStreakWeeks} semanas consecutivas con entrenamiento registrado.`);
-  }
+  const { canvas, context } = canvasBundle;
+  const visible = items.slice(0, 6);
+  const maxValue = Math.max(...visible.map((item) => item.deltaPercent ?? 0), 1);
 
-  return conclusions;
+  context.fillStyle = "#fffdfa";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#182026";
+  context.font = "700 22px Georgia";
+  context.fillText(title, 32, 34);
+
+  visible.forEach((item, index) => {
+    const value = Math.max(item.deltaPercent ?? 0, 0);
+    const barWidth = (value / maxValue) * 420;
+    const y = 74 + index * 42;
+
+    context.fillStyle = "#f0e7d8";
+    context.fillRect(220, y, 440, 20);
+    context.fillStyle = "#0f766e";
+    context.fillRect(220, y, barWidth, 20);
+
+    context.fillStyle = "#182026";
+    context.font = "600 16px Georgia";
+    context.fillText(item.exerciseName.slice(0, 24), 32, y + 15);
+    context.fillText(`${value.toFixed(1)}%`, 670, y + 15);
+  });
+
+  return canvas.toDataURL("image/png");
 }
 
 export function downloadBaseExcel() {
@@ -130,8 +259,10 @@ export function downloadPerformanceWorkbook(
   const summaryRows = [
     { indicador: "Atleta", valor: athleteName },
     { indicador: "Fecha del informe", valor: buildFileDateSuffix() },
-    { indicador: "Total de sesiones", valor: snapshot.totalSessions },
-    { indicador: "Total de series", valor: snapshot.totalSets },
+    { indicador: "Sesiones totales", valor: snapshot.totalSessions },
+    { indicador: "Semanas con datos", valor: snapshot.totalWeeksTracked },
+    { indicador: "Nivel de fiabilidad", valor: snapshot.dataReadiness },
+    { indicador: "Series totales", valor: snapshot.totalSets },
     { indicador: "Volumen total (kg)", valor: Number(snapshot.totalVolumeKg.toFixed(1)) },
     { indicador: "Volumen medio por sesión (kg)", valor: Number(snapshot.averageSessionVolumeKg.toFixed(1)) },
     { indicador: "RIR medio", valor: Number(snapshot.averageSessionRir.toFixed(2)) },
@@ -182,6 +313,7 @@ export function downloadPerformanceWorkbook(
     session.sets.map((setItem, index) => ({
       fecha: formatReportDate(session.created_at),
       sesion: session.title,
+      semana: session.week_number,
       posicion: index + 1,
       ejercicio: setItem.exercise_name,
       grupo: setItem.muscle_group,
@@ -283,6 +415,54 @@ export function downloadPerformanceWorkbook(
     },
   ];
 
+  const weeklyRows = snapshot.weeklyOverview.map((item) => ({
+    semana: item.weekNumber,
+    sesiones: item.totalSessions,
+    series: item.totalSets,
+    volumen_kg: Number(item.totalVolumeKg.toFixed(1)),
+    rir_medio: Number(item.averageRir.toFixed(2)),
+  }));
+
+  const exerciseDetailRows = snapshot.exerciseReportRows.map((item) => ({
+    ejercicio: item.exerciseName,
+    grupo: item.muscleGroup,
+    veces: item.timesPerformed,
+    series: item.totalSets,
+    volumen_kg: Number(item.totalVolumeKg.toFixed(1)),
+    e1rm_inicial: item.firstEstimatedRm === null ? "" : Number(item.firstEstimatedRm.toFixed(1)),
+    e1rm_actual: item.latestEstimatedRm === null ? "" : Number(item.latestEstimatedRm.toFixed(1)),
+    e1rm_mejor: item.bestEstimatedRm === null ? "" : Number(item.bestEstimatedRm.toFixed(1)),
+    mejora_kg: item.deltaKg === null ? "" : Number(item.deltaKg.toFixed(1)),
+    mejora_pct: item.deltaPercent === null ? "" : Number(item.deltaPercent.toFixed(1)),
+    tendencia: getTrendArrow(item),
+    ultima_fecha: item.lastDate ? formatReportDate(item.lastDate) : "",
+  }));
+
+  const exerciseWeekRows = snapshot.exerciseWeeklyProgress.map((item) => ({
+    semana: item.weekNumber,
+    ejercicio: item.exerciseName,
+    grupo: item.muscleGroup,
+    exposiciones: item.exposures,
+    series: item.totalSets,
+    volumen_kg: Number(item.totalVolumeKg.toFixed(1)),
+    mejor_e1rm: item.bestEstimatedRm === null ? "" : Number(item.bestEstimatedRm.toFixed(1)),
+    rir_medio: item.averageRir === null ? "" : Number(item.averageRir.toFixed(2)),
+  }));
+
+  const distributionRows = snapshot.muscleDistribution.map((item) => ({
+    grupo: item.muscleGroup,
+    series: item.totalSets,
+    volumen_kg: Number(item.totalVolumeKg.toFixed(1)),
+    reparto_pct: Number(item.sharePercent.toFixed(1)),
+  }));
+
+  const recommendationRows = snapshot.recommendations.map((item, index) => ({
+    orden: index + 1,
+    tono: item.tone,
+    titulo: item.title,
+    mensaje: item.message,
+  }));
+
   const conclusionRows = buildReportConclusions(snapshot).map((texto, index) => ({
     orden: index + 1,
     conclusion: texto,
@@ -339,17 +519,22 @@ export function downloadPerformanceWorkbook(
     })),
   ];
 
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), "Resumen");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sessionRows), "Sesiones");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(setRows), "Series");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(measurementRows), "Medidas");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(progressionRows), "Progresion");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(favoriteRows), "Favorito");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(recordsRows), "Records");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(muscleRows), "Musculos");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(conclusionRows), "Conclusiones");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(trendRows), "Tendencias");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(chartReadyRows), "Datos_graficas");
+  appendSheet(workbook, "Resumen", summaryRows);
+  appendSheet(workbook, "Sesiones", sessionRows);
+  appendSheet(workbook, "Series", setRows);
+  appendSheet(workbook, "Medidas", measurementRows);
+  appendSheet(workbook, "Progresion", progressionRows);
+  appendSheet(workbook, "Favorito", favoriteRows);
+  appendSheet(workbook, "Records", recordsRows);
+  appendSheet(workbook, "Musculos", muscleRows);
+  appendSheet(workbook, "Semanas", weeklyRows);
+  appendSheet(workbook, "Ejercicios", exerciseDetailRows);
+  appendSheet(workbook, "Ejercicio_semana", exerciseWeekRows);
+  appendSheet(workbook, "Distribucion", distributionRows);
+  appendSheet(workbook, "Recomendaciones", recommendationRows);
+  appendSheet(workbook, "Conclusiones", conclusionRows);
+  appendSheet(workbook, "Tendencias", trendRows);
+  appendSheet(workbook, "Datos_graficas", chartReadyRows);
 
   const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   downloadBlob(
@@ -382,22 +567,22 @@ export function downloadPerformancePdf(
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.text(
-    "Resumen científico del rendimiento: marcas, evolución de carga, adherencia y cambios corporales.",
+    "Resumen científico del rendimiento: marcas, evolución de carga, adherencia, distribución muscular y cambios corporales.",
     14,
     46,
     { maxWidth: 180 }
   );
 
-  doc.setFontSize(11);
-  doc.text(`Atleta: ${athleteName}`, 14, 52);
-
   autoTable(doc, {
-    startY: 58,
+    startY: 54,
     theme: "grid",
     styles: { fontSize: 10, cellPadding: 2.6, textColor: [40, 35, 28] },
     headStyles: { fillColor: [15, 118, 110] },
     body: [
+      ["Atleta", athleteName],
       ["Sesiones totales", String(snapshot.totalSessions)],
+      ["Semanas con datos", String(snapshot.totalWeeksTracked)],
+      ["Fiabilidad de la muestra", snapshot.dataReadiness],
       ["Series totales", String(snapshot.totalSets)],
       ["Volumen total", `${snapshot.totalVolumeKg.toFixed(1)} kg`],
       ["RIR medio", snapshot.averageSessionRir.toFixed(2)],
@@ -414,45 +599,65 @@ export function downloadPerformancePdf(
           ? `${snapshot.favoriteExercise.exerciseName} · ${snapshot.favoriteExercise.reason}`
           : "Sin datos suficientes",
       ],
-      ["Racha activa", `${snapshot.adherenceStreakWeeks} semanas`],
-      ["Grupo estrella", snapshot.starMuscle?.reason ?? "Sin datos suficientes"],
-      ["Grupo rezagado", snapshot.laggingMuscle?.reason ?? "Sin datos suficientes"],
     ],
   });
 
-  let currentY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 92;
-  currentY += 6;
+  let currentY = ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 90) + 6;
   currentY = drawLineChart(doc, "Peso corporal", snapshot.weightTrend, 14, currentY, 82, 34, [15, 118, 110]);
   currentY = drawLineChart(doc, "Volumen por sesión", snapshot.sessionVolumeTrend, 110, currentY - 52, 82, 34, [201, 106, 61]);
   currentY += 4;
   currentY = drawLineChart(doc, "RIR medio", snapshot.sessionRirTrend, 14, currentY, 82, 34, [124, 58, 237]);
-  currentY = drawLineChart(
-    doc,
-    "e1RM del ejercicio con más progreso",
-    snapshot.topExerciseTrend,
-    110,
-    currentY - 52,
-    82,
-    34,
-    [44, 84, 122]
-  );
+  currentY = drawLineChart(doc, "Sesiones por mes", snapshot.sessionFrequencyTrend, 110, currentY - 52, 82, 34, [37, 99, 235]);
 
+  doc.addPage();
+  const donutData = buildDonutChartDataUrl(snapshot.muscleDistribution);
+  if (donutData) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Distribución del trabajo por grupo muscular", 14, 18);
+    doc.addImage(donutData, "PNG", 14, 24, 180, 84);
+  }
+
+  const barData = buildBarChartDataUrl("Top ejercicios por mejora porcentual", snapshot.exerciseReportRows);
+  if (barData) {
+    doc.addImage(barData, "PNG", 14, 116, 180, 90);
+  }
+
+  doc.addPage();
   autoTable(doc, {
-    startY: Math.max(currentY + 4, 170),
+    startY: 18,
     theme: "striped",
-    styles: { fontSize: 9, cellPadding: 2.2 },
+    styles: { fontSize: 8.7, cellPadding: 2.2 },
     headStyles: { fillColor: [32, 86, 91] },
-    head: [["Top", "Ejercicio", "Grupo", "e1RM inicial", "e1RM actual", "Mejora %"]],
-    body: snapshot.topImprovements.length
-      ? snapshot.topImprovements.map((item, index) => [
+    head: [["Top", "Ejercicio", "Grupo", "Tendencia", "e1RM inicial", "e1RM actual", "Mejora %"]],
+    body: snapshot.exerciseReportRows.length
+      ? snapshot.exerciseReportRows.slice(0, 10).map((item, index) => [
           String(index + 1),
           item.exerciseName,
           item.muscleGroup,
-          item.startEstimatedRm.toFixed(1),
-          item.latestEstimatedRm.toFixed(1),
-          `${item.deltaPercent.toFixed(1)}%`,
+          getTrendArrow(item),
+          item.firstEstimatedRm === null ? "--" : item.firstEstimatedRm.toFixed(1),
+          item.latestEstimatedRm === null ? "--" : item.latestEstimatedRm.toFixed(1),
+          item.deltaPercent === null ? "--" : `${item.deltaPercent.toFixed(1)}%`,
         ])
-      : [["-", "Sin datos suficientes", "-", "-", "-", "-"]],
+      : [["-", "Sin datos suficientes", "-", "-", "-", "-", "-"]],
+  });
+
+  autoTable(doc, {
+    startY: ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 18) + 8,
+    theme: "grid",
+    styles: { fontSize: 8.5, cellPadding: 2.1 },
+    headStyles: { fillColor: [201, 106, 61] },
+    head: [["Semana", "Sesiones", "Series", "Volumen", "RIR medio"]],
+    body: snapshot.weeklyOverview.length
+      ? snapshot.weeklyOverview.map((item) => [
+          String(item.weekNumber),
+          String(item.totalSessions),
+          String(item.totalSets),
+          `${item.totalVolumeKg.toFixed(1)} kg`,
+          item.averageRir.toFixed(2),
+        ])
+      : [["-", "-", "-", "-", "-"]],
   });
 
   doc.addPage();
@@ -470,43 +675,16 @@ export function downloadPerformancePdf(
     theme: "striped",
     styles: { fontSize: 8.8, cellPadding: 2 },
     headStyles: { fillColor: [32, 86, 91] },
-    head: [["Récord", "Ejercicio/Sesión", "Valor", "Fecha"]],
-    body: [
-      [
-        "Serie más pesada",
-        snapshot.personalRecords.heaviestSet?.exerciseName ?? "-",
-        snapshot.personalRecords.heaviestSet
-          ? `${snapshot.personalRecords.heaviestSet.value.toFixed(1)} ${snapshot.personalRecords.heaviestSet.unit}`
-          : "-",
-        snapshot.personalRecords.heaviestSet ? formatReportDate(snapshot.personalRecords.heaviestSet.date) : "-",
-      ],
-      [
-        "Mejor e1RM",
-        snapshot.personalRecords.bestEstimatedRm?.exerciseName ?? "-",
-        snapshot.personalRecords.bestEstimatedRm
-          ? `${snapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} ${snapshot.personalRecords.bestEstimatedRm.unit}`
-          : "-",
-        snapshot.personalRecords.bestEstimatedRm ? formatReportDate(snapshot.personalRecords.bestEstimatedRm.date) : "-",
-      ],
-      [
-        "Sesión con más volumen",
-        snapshot.personalRecords.highestVolumeSession?.sessionTitle ?? "-",
-        snapshot.personalRecords.highestVolumeSession
-          ? `${snapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
-          : "-",
-        snapshot.personalRecords.highestVolumeSession
-          ? formatReportDate(snapshot.personalRecords.highestVolumeSession.date)
-          : "-",
-      ],
-    ],
+    head: [["Sugerencia", "Mensaje"]],
+    body: snapshot.recommendations.map((item) => [item.title, item.message]),
   });
 
   doc.addPage();
   autoTable(doc, {
     startY: 18,
-    theme: "grid",
+    theme: "striped",
     styles: { fontSize: 8.4, cellPadding: 2 },
-    headStyles: { fillColor: [15, 118, 110] },
+    headStyles: { fillColor: [32, 86, 91] },
     head: [["Fecha", "Sesión", "Día", "Semana", "Series", "Volumen", "RIR medio"]],
     body: sessions.length
       ? sessions.map((session) => [
@@ -522,11 +700,9 @@ export function downloadPerformancePdf(
   });
 
   autoTable(doc, {
-    startY: (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY
-      ? ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 18) + 8
-      : 150,
+    startY: ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 18) + 8,
     theme: "striped",
-    styles: { fontSize: 8.4, cellPadding: 2 },
+    styles: { fontSize: 8.2, cellPadding: 1.8 },
     headStyles: { fillColor: [201, 106, 61] },
     head: [["Fecha", "Peso", "Grasa %", "Pecho", "Cintura", "Brazo", "Muslo"]],
     body: measurements.length

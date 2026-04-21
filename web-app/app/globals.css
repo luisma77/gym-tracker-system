@@ -404,6 +404,15 @@ main {
   resize: vertical;
 }
 
+.textarea-compact {
+  min-height: 140px;
+}
+
+.button-fit {
+  justify-self: start;
+  min-width: 220px;
+}
+
 .session-item {
   padding-top: 12px;
   border-top: 1px solid var(--line);
@@ -465,6 +474,29 @@ main {
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+}
+
+.body-top-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+}
+
+.body-side-stack,
+.progress-layout,
+.reports-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.body-bottom-grid,
+.progress-top-grid,
+.progress-bottom-grid,
+.reports-top-grid,
+.reports-bottom-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .overview-highlight-grid {
@@ -705,6 +737,10 @@ main {
   background: rgba(240, 247, 245, 0.88);
 }
 
+.calculator-legend-card {
+  background: linear-gradient(180deg, rgba(255, 253, 250, 0.94), rgba(240, 247, 245, 0.84));
+}
+
 .calculator-guidance-grid {
   display: grid;
   gap: 12px;
@@ -895,6 +931,18 @@ main {
   justify-content: space-between;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.report-recommendation-card.info {
+  background: rgba(240, 247, 245, 0.85);
+}
+
+.report-recommendation-card.positive {
+  background: rgba(231, 247, 238, 0.88);
+}
+
+.report-recommendation-card.warning {
+  background: rgba(251, 231, 228, 0.88);
 }
 
 .preview-carousel {
@@ -1238,6 +1286,12 @@ main {
   .overview-bottom-grid,
   .overview-highlight-grid,
   .measurements-top-grid,
+  .body-top-grid,
+  .body-bottom-grid,
+  .progress-top-grid,
+  .progress-bottom-grid,
+  .reports-top-grid,
+  .reports-bottom-grid,
   .volume-status-grid.compact,
   .muscle-phase-grid.compact,
   .overview-stats-grid {
@@ -1287,12 +1341,18 @@ main {
   }
 
   .overview-top-grid,
-  .measurements-top-grid {
+  .measurements-top-grid,
+  .body-top-grid,
+  .progress-top-grid,
+  .reports-top-grid {
     grid-template-columns: 1fr;
   }
 
   .overview-highlight-grid,
-  .overview-bottom-grid {
+  .overview-bottom-grid,
+  .body-bottom-grid,
+  .progress-bottom-grid,
+  .reports-bottom-grid {
     grid-template-columns: 1fr;
   }
 

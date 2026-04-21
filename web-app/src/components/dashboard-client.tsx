@@ -34,7 +34,7 @@ type StoredUser = {
   full_name: string;
 };
 
-type DashboardTab = "overview" | "workout" | "measurements" | "charts";
+type DashboardTab = "overview" | "workout" | "body" | "progress" | "reports";
 type BlockType = "HIP" | "FUE";
 type DayKind = "push" | "pull" | "legs";
 type ProgressAction = "SIN_DATOS" | "SUBE" | "MANTEN" | "BAJA";
@@ -725,6 +725,16 @@ export function DashboardClient() {
   const rirTrend = performanceSnapshot.sessionRirTrend;
   const frequencyTrend = performanceSnapshot.sessionFrequencyTrend;
   const topExerciseTrend = performanceSnapshot.topExerciseTrend;
+  const reportRecommendations = performanceSnapshot.recommendations.slice(0, 4);
+  const latestBodyFat = latestMeasurement?.body_fat_percent ?? null;
+  const oldestMeasurement = measurements.length > 1 ? measurements[measurements.length - 1] : null;
+  const waistDelta =
+    latestMeasurement?.waist_cm !== null &&
+    latestMeasurement?.waist_cm !== undefined &&
+    oldestMeasurement?.waist_cm !== null &&
+    oldestMeasurement?.waist_cm !== undefined
+      ? latestMeasurement.waist_cm - oldestMeasurement.waist_cm
+      : null;
 
   const currentWeekSessions = sessions.filter((session) => session.week_number === currentWeek);
 
@@ -1101,8 +1111,9 @@ export function DashboardClient() {
         {[
           { id: "overview", label: "Resumen" },
           { id: "workout", label: "Sesion" },
-          { id: "measurements", label: "Medidas" },
-          { id: "charts", label: "Graficas" },
+          { id: "body", label: "Cuerpo" },
+          { id: "progress", label: "Progreso" },
+          { id: "reports", label: "Informes" },
         ].map((tab) => (
           <button
             className={`tab-button ${activeTab === tab.id ? "active" : ""}`}
@@ -1123,7 +1134,7 @@ export function DashboardClient() {
               <div className="overview-summary-header">
                 <div>
                   <h2>Hola, {user?.full_name ?? "atleta"}</h2>
-                  <p>Lectura rápida de bloque, progreso corporal y estado actual de la planificación.</p>
+                  <p>Vista corta para saber qué toca, cómo va tu bloque y qué merece atención esta semana.</p>
                 </div>
                 <div className="overview-summary-highlight">
                   <strong>Siguiente dia</strong>
@@ -1215,114 +1226,51 @@ export function DashboardClient() {
                   <p>Todavía no hay suficientes datos para detectar tu ejercicio favorito.</p>
                 )}
               </article>
-
-              <article className="card stack">
-                <span className="pill">Músculos</span>
-                <h2>Tu grupo estrella y tu grupo rezagado</h2>
-                <div className="summary-list compact">
-                  <div className="compact-summary-card">
-                    <strong>Grupo estrella</strong>
-                    <span>{performanceSnapshot.starMuscle?.muscleGroup ?? "--"}</span>
-                    <small>{performanceSnapshot.starMuscle?.reason ?? "Sin datos suficientes."}</small>
-                  </div>
-                  <div className="compact-summary-card">
-                    <strong>Grupo rezagado</strong>
-                    <span>{performanceSnapshot.laggingMuscle?.muscleGroup ?? "--"}</span>
-                    <small>{performanceSnapshot.laggingMuscle?.reason ?? "Sin datos suficientes."}</small>
-                  </div>
-                </div>
-              </article>
-
-              <article className="card stack">
-                <span className="pill">Récords</span>
-                <h2>Marcas destacadas</h2>
-                <div className="summary-list compact">
-                  <div className="compact-summary-card">
-                    <strong>Serie más pesada</strong>
-                    <span>
-                      {performanceSnapshot.personalRecords.heaviestSet
-                        ? `${performanceSnapshot.personalRecords.heaviestSet.exerciseName} · ${performanceSnapshot.personalRecords.heaviestSet.value.toFixed(1)} kg`
-                        : "--"}
-                    </span>
-                  </div>
-                  <div className="compact-summary-card">
-                    <strong>Mejor e1RM</strong>
-                    <span>
-                      {performanceSnapshot.personalRecords.bestEstimatedRm
-                        ? `${performanceSnapshot.personalRecords.bestEstimatedRm.exerciseName} · ${performanceSnapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} kg`
-                        : "--"}
-                    </span>
-                  </div>
-                  <div className="compact-summary-card">
-                    <strong>Sesión con más volumen</strong>
-                    <span>
-                      {performanceSnapshot.personalRecords.highestVolumeSession
-                        ? `${performanceSnapshot.personalRecords.highestVolumeSession.sessionTitle} · ${performanceSnapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
-                        : "--"}
-                    </span>
-                  </div>
-                </div>
-              </article>
             </div>
           </div>
 
           <div className="overview-bottom-grid">
             <article className="card stack">
-              <span className="pill">Estado muscular</span>
-              <h2>Lo importante ahora</h2>
-              <div className="muscle-phase-grid compact">
-                {visibleMuscleSummary.map((item) => (
-                  <div className="muscle-phase-card compact" key={item.group}>
-                    <div className="muscle-phase-header">
-                      <strong>{item.group}</strong>
-                      <span className={`status-badge ${item.stale ? "bajo" : "optimo"}`}>
-                        {item.stale ? "2 sesiones sin tocar" : "Activo"}
-                      </span>
-                    </div>
-                    <p>{item.phase}</p>
-                  </div>
-                ))}
+              <span className="pill">Lo que toca ahora</span>
+              <h2>Lectura rápida de esta semana</h2>
+              <div className="summary-list compact">
+                <div className="compact-summary-card">
+                  <strong>Grupo estrella</strong>
+                  <span>{performanceSnapshot.starMuscle?.muscleGroup ?? "--"}</span>
+                  <small>{performanceSnapshot.starMuscle?.reason ?? "Sin datos suficientes."}</small>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Grupo rezagado</strong>
+                  <span>{performanceSnapshot.laggingMuscle?.muscleGroup ?? "--"}</span>
+                  <small>{performanceSnapshot.laggingMuscle?.reason ?? "Sin datos suficientes."}</small>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Última sesión</strong>
+                  <span>{sessions[0]?.title ?? "--"}</span>
+                  <small>
+                    {sessions[0]
+                      ? `${sessions[0].training_day} · Semana ${sessions[0].week_number} · ${formatDate(sessions[0].created_at)}`
+                      : "Todavía no hay una sesión guardada."}
+                  </small>
+                </div>
               </div>
-              {hiddenMuscleCount > 0 ? <p className="compact-copy">Y {hiddenMuscleCount} grupos más en el detalle completo.</p> : null}
             </article>
 
             <article className="card stack">
-              <span className="pill">Radar semanal</span>
-              <h2>Volumen y últimas sesiones</h2>
-              <div className="radar-block">
-                <strong>Volumen por grupo</strong>
-                <div className="volume-status-grid compact">
-                  {visibleWeeklyVolume.map((item) => (
-                    <div className="volume-status-card compact" key={item.group}>
-                      <div className="volume-status-header">
-                        <strong>{item.group}</strong>
-                        <span className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</span>
-                      </div>
-                      <p>{item.weeklySets} series</p>
-                      <small>
-                        Objetivo {item.target.min}-{item.target.max}
-                      </small>
+              <span className="pill">Siguiente ajuste</span>
+              <h2>Mensajes rápidos para no saturarte</h2>
+              {reportRecommendations.length === 0 ? (
+                <p>Todavía no hay suficiente historial para sugerencias personalizadas.</p>
+              ) : (
+                <div className="summary-list compact">
+                  {reportRecommendations.map((item) => (
+                    <div className="compact-summary-card" key={item.title}>
+                      <strong>{item.title}</strong>
+                      <small>{item.message}</small>
                     </div>
                   ))}
                 </div>
-                {hiddenVolumeCount > 0 ? <p className="compact-copy">Y {hiddenVolumeCount} grupos más en el panel completo.</p> : null}
-              </div>
-              <div className="radar-block">
-                <strong>Últimas sesiones</strong>
-                {sessions.length === 0 ? (
-                  <p>Aun no hay sesiones guardadas.</p>
-                ) : (
-                  sessions.slice(0, 3).map((session) => (
-                    <div className="session-item compact" key={session.id}>
-                      <strong>{session.title}</strong>
-                      <p>
-                        {session.training_day} · Semana {session.week_number}
-                      </p>
-                      <p>{formatDate(session.created_at)} · RIR {formatDecimal(getAverageSessionRir(session))}</p>
-                    </div>
-                  ))
-                )}
-              </div>
+              )}
             </article>
           </div>
         </section>
@@ -1643,419 +1591,606 @@ export function DashboardClient() {
         </section>
       ) : null}
 
-      {activeTab === "measurements" ? (
-        <section className="stack dashboard-panels measurements-layout">
-          <div className="measurements-top-grid">
-          <article className="card stack">
-            <span className="pill">Medidas corporales</span>
-            <h2>Registrar progreso fisico</h2>
-            <div className="grid triple metrics-grid">
+      {activeTab === "body" ? (
+        <section className="stack dashboard-panels body-layout">
+          <div className="body-top-grid">
+            <article className="card stack body-form-card">
+              <span className="pill">Medidas corporales</span>
+              <h2>Registrar progreso fisico</h2>
+              <div className="grid triple metrics-grid">
+                <label className="field">
+                  <span>Fecha</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, measuredAt: event.target.value })}
+                    type="date"
+                    value={measurementDraft.measuredAt}
+                  />
+                </label>
+                <label className="field">
+                  <span>Peso kg</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, weightKg: event.target.value })}
+                    type="number"
+                    value={measurementDraft.weightKg}
+                  />
+                </label>
+                <label className="field">
+                  <span>Grasa corporal %</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, bodyFatPercent: event.target.value })}
+                    type="number"
+                    value={measurementDraft.bodyFatPercent}
+                  />
+                </label>
+                <label className="field">
+                  <span>Pecho cm</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, chestCm: event.target.value })}
+                    type="number"
+                    value={measurementDraft.chestCm}
+                  />
+                </label>
+                <label className="field">
+                  <span>Cintura cm</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, waistCm: event.target.value })}
+                    type="number"
+                    value={measurementDraft.waistCm}
+                  />
+                </label>
+                <label className="field">
+                  <span>Cadera cm</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, hipCm: event.target.value })}
+                    type="number"
+                    value={measurementDraft.hipCm}
+                  />
+                </label>
+                <label className="field">
+                  <span>Brazo cm</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, armCm: event.target.value })}
+                    type="number"
+                    value={measurementDraft.armCm}
+                  />
+                </label>
+                <label className="field">
+                  <span>Muslo cm</span>
+                  <input
+                    onChange={(event) => setMeasurementDraft({ ...measurementDraft, thighCm: event.target.value })}
+                    type="number"
+                    value={measurementDraft.thighCm}
+                  />
+                </label>
+              </div>
               <label className="field">
-                <span>Fecha</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, measuredAt: event.target.value })}
-                  type="date"
-                  value={measurementDraft.measuredAt}
+                <span>Notas</span>
+                <textarea
+                  className="textarea textarea-compact"
+                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, notes: event.target.value })}
+                  value={measurementDraft.notes}
                 />
               </label>
-              <label className="field">
-                <span>Peso kg</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, weightKg: event.target.value })}
-                  type="number"
-                  value={measurementDraft.weightKg}
-                />
-              </label>
-              <label className="field">
-                <span>Grasa corporal %</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, bodyFatPercent: event.target.value })}
-                  type="number"
-                  value={measurementDraft.bodyFatPercent}
-                />
-              </label>
-              <label className="field">
-                <span>Pecho cm</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, chestCm: event.target.value })}
-                  type="number"
-                  value={measurementDraft.chestCm}
-                />
-              </label>
-              <label className="field">
-                <span>Cintura cm</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, waistCm: event.target.value })}
-                  type="number"
-                  value={measurementDraft.waistCm}
-                />
-              </label>
-              <label className="field">
-                <span>Cadera cm</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, hipCm: event.target.value })}
-                  type="number"
-                  value={measurementDraft.hipCm}
-                />
-              </label>
-              <label className="field">
-                <span>Brazo cm</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, armCm: event.target.value })}
-                  type="number"
-                  value={measurementDraft.armCm}
-                />
-              </label>
-              <label className="field">
-                <span>Muslo cm</span>
-                <input
-                  onChange={(event) => setMeasurementDraft({ ...measurementDraft, thighCm: event.target.value })}
-                  type="number"
-                  value={measurementDraft.thighCm}
-                />
-              </label>
-            </div>
-            <label className="field">
-              <span>Notas</span>
-              <textarea
-                className="textarea"
-                onChange={(event) => setMeasurementDraft({ ...measurementDraft, notes: event.target.value })}
-                value={measurementDraft.notes}
-              />
-            </label>
-            <button className="button primary" disabled={savingMeasurement} onClick={handleCreateMeasurement} type="button">
-              {savingMeasurement ? "Guardando..." : "Guardar medidas"}
-            </button>
-          </article>
+              <button className="button primary button-fit" disabled={savingMeasurement} onClick={handleCreateMeasurement} type="button">
+                {savingMeasurement ? "Guardando..." : "Guardar medidas"}
+              </button>
+            </article>
 
-          <article className="card stack">
-            <span className="pill">Calculadora</span>
-            <h2>Harris-Benedict completa</h2>
-            <p>
-              Estima tu gasto basal, calorias objetivo, macros, IMC y rango de peso saludable con una referencia rapida
-              basada en tu actividad actual.
-            </p>
-            <div className="grid triple metrics-grid">
-              <label className="field">
-                <span>Sexo biologico</span>
-                <select
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, sex: event.target.value as HarrisDraft["sex"] })}
-                  value={harrisDraft.sex}
-                >
-                  <option value="male">Hombre</option>
-                  <option value="female">Mujer</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Edad</span>
-                <input
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, age: event.target.value })}
-                  type="number"
-                  value={harrisDraft.age}
-                />
-              </label>
-              <label className="field">
-                <span>Altura cm</span>
-                <input
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, heightCm: event.target.value })}
-                  type="number"
-                  value={harrisDraft.heightCm}
-                />
-              </label>
-              <label className="field">
-                <span>Peso kg</span>
-                <input
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, weightKg: event.target.value })}
-                  placeholder={latestKnownWeight ? `${formatDecimal(latestKnownWeight)} kg de tu ultimo registro` : "Peso actual"}
-                  type="number"
-                  value={harrisDraft.weightKg}
-                />
-                <small className="field-hint">
-                  {latestKnownWeight
-                    ? `Si lo dejas vacio, usamos ${formatDecimal(latestKnownWeight)} kg de tu ultima medicion.`
-                    : "Introduce tu peso actual para calcular calorias y macros."}
-                </small>
-              </label>
-              <label className="field">
-                <span>Cintura cm</span>
-                <input
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, waistCm: event.target.value })}
-                  placeholder={latestKnownWaist ? `${formatDecimal(latestKnownWaist)} cm de tu ultimo registro` : "Cintura a la altura del ombligo"}
-                  type="number"
-                  value={harrisDraft.waistCm}
-                />
-                <small className="field-hint">
-                  {latestKnownWaist
-                    ? `Si lo dejas vacio, usamos ${formatDecimal(latestKnownWaist)} cm de tu ultima medicion para estimar grasa corporal.`
-                    : "Con la cintura podemos estimar grasa corporal de forma aproximada, aunque puede desviarse."}
-                </small>
-              </label>
-              <label className="field">
-                <span>Nivel de actividad</span>
-                <select
-                  onChange={(event) => setHarrisDraft({ ...harrisDraft, activity: event.target.value as HarrisDraft["activity"] })}
-                  value={harrisDraft.activity}
-                >
-                  {ACTIVITY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>Objetivo</span>
-                <select onChange={(event) => setHarrisDraft({ ...harrisDraft, goal: event.target.value as HarrisDraft["goal"] })} value={harrisDraft.goal}>
-                  {GOAL_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="body-side-stack">
+              <article className="card stack">
+                <span className="pill">Calculadora</span>
+                <h2>Harris-Benedict completa</h2>
+                <div className="grid triple metrics-grid">
+                  <label className="field">
+                    <span>Sexo biologico</span>
+                    <select
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, sex: event.target.value as HarrisDraft["sex"] })}
+                      value={harrisDraft.sex}
+                    >
+                      <option value="male">Hombre</option>
+                      <option value="female">Mujer</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Edad</span>
+                    <input
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, age: event.target.value })}
+                      type="number"
+                      value={harrisDraft.age}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Altura cm</span>
+                    <input
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, heightCm: event.target.value })}
+                      type="number"
+                      value={harrisDraft.heightCm}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Peso kg</span>
+                    <input
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, weightKg: event.target.value })}
+                      placeholder={latestKnownWeight ? `${formatDecimal(latestKnownWeight)} kg de tu ultimo registro` : "Peso actual"}
+                      type="number"
+                      value={harrisDraft.weightKg}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Cintura cm</span>
+                    <input
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, waistCm: event.target.value })}
+                      placeholder={latestKnownWaist ? `${formatDecimal(latestKnownWaist)} cm de tu ultimo registro` : "Cintura a la altura del ombligo"}
+                      type="number"
+                      value={harrisDraft.waistCm}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Nivel de actividad</span>
+                    <select
+                      onChange={(event) => setHarrisDraft({ ...harrisDraft, activity: event.target.value as HarrisDraft["activity"] })}
+                      value={harrisDraft.activity}
+                    >
+                      {ACTIVITY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Objetivo</span>
+                    <select onChange={(event) => setHarrisDraft({ ...harrisDraft, goal: event.target.value as HarrisDraft["goal"] })} value={harrisDraft.goal}>
+                      {GOAL_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                {harrisResult ? (
+                  <>
+                    <div className="calculator-results-grid">
+                      <div className="calculator-metric-card">
+                        <span>TMB</span>
+                        <strong>{Math.round(harrisResult.bmr)} kcal</strong>
+                        <small>Tu gasto basal en reposo total.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>GET</span>
+                        <strong>{Math.round(harrisResult.tdee)} kcal</strong>
+                        <small>Gasto diario segun tu actividad.</small>
+                      </div>
+                      <div className="calculator-metric-card accent">
+                        <span>Objetivo diario</span>
+                        <strong>{Math.round(harrisResult.targetCalories)} kcal</strong>
+                        <small>{harrisResult.goal.label} con ajuste automatico.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>IMC</span>
+                        <strong>{formatDecimal(harrisResult.bmi)}</strong>
+                        <small>
+                          Rango saludable estimado: {formatDecimal(harrisResult.minHealthyWeight)} a{" "}
+                          {formatDecimal(harrisResult.maxHealthyWeight)} kg.
+                        </small>
+                      </div>
+                    </div>
+                    <div className="calculator-results-grid">
+                      <div className="calculator-metric-card">
+                        <span>Proteina</span>
+                        <strong>{Math.round(harrisResult.proteinGrams)} g</strong>
+                        <small>{formatDecimal(harrisResult.proteinPerKg)} g/kg · {harrisResult.guidance.proteinRange}</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Grasas</span>
+                        <strong>{Math.round(harrisResult.fatGrams)} g</strong>
+                        <small>{formatDecimal(harrisResult.fatPerKg)} g/kg.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Carbohidratos</span>
+                        <strong>{Math.round(harrisResult.carbGrams)} g</strong>
+                        <small>Combustible disponible tras fijar proteina y grasa.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Perfil</span>
+                        <strong>
+                          {harrisResult.age} años · {Math.round(harrisResult.weightKg)} kg
+                        </strong>
+                        <small>
+                          {Math.round(harrisResult.heightCm)} cm · factor {harrisResult.activity.factor.toFixed(3)}.
+                        </small>
+                      </div>
+                    </div>
+                    <div className="calculator-results-grid">
+                      <div className="calculator-metric-card">
+                        <span>Grasa estimada</span>
+                        <strong>
+                          {harrisResult.bodyFatPercentEstimate !== null ? `${formatDecimal(harrisResult.bodyFatPercentEstimate)} %` : "--"}
+                        </strong>
+                        <small>Estimación antropométrica.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Masa magra</span>
+                        <strong>{harrisResult.leanMassKg !== null ? `${formatDecimal(harrisResult.leanMassKg)} kg` : "--"}</strong>
+                        <small>Tejido libre de grasa estimado.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Masa grasa</span>
+                        <strong>{harrisResult.fatMassKg !== null ? `${formatDecimal(harrisResult.fatMassKg)} kg` : "--"}</strong>
+                        <small>Estimación de grasa total corporal.</small>
+                      </div>
+                      <div className="calculator-metric-card">
+                        <span>Cintura/altura</span>
+                        <strong>
+                          {harrisResult.waistToHeightRatio !== null ? formatDecimal(harrisResult.waistToHeightRatio) : "--"}
+                        </strong>
+                        <small>{harrisResult.guidance.waistToHeight}</small>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="calculator-note">
+                    Completa edad, altura y peso para ver el cálculo completo de Harris-Benedict con gasto basal, macros e IMC.
+                  </p>
+                )}
+              </article>
+
+              <article className="card stack calculator-legend-card">
+                <span className="pill">Leyenda</span>
+                <h2>Como leer esta calculadora</h2>
+                {harrisResult ? (
+                  <div className="summary-list compact">
+                    <div className="compact-summary-card">
+                      <strong>Carbohidratos</strong>
+                      <small>{harrisResult.guidance.carbsFocus}</small>
+                    </div>
+                    <div className="compact-summary-card">
+                      <strong>Grasas</strong>
+                      <small>{harrisResult.guidance.fatFocus}</small>
+                    </div>
+                    <div className="compact-summary-card">
+                      <strong>Grasa estimada</strong>
+                      <small>{harrisResult.guidance.bodyFatEstimate}</small>
+                    </div>
+                    <div className="compact-summary-card">
+                      <strong>Uso práctico</strong>
+                      <small>
+                        Tómalas como referencia inicial y compáralas con peso, rendimiento, hambre y recuperación durante 2-3 semanas.
+                      </small>
+                    </div>
+                  </div>
+                ) : (
+                  <p>Cuando metas los datos verás aquí la leyenda interpretativa, separada del resultado para no confundirte.</p>
+                )}
+              </article>
             </div>
-            {harrisResult ? (
-              <>
-                <div className="calculator-results-grid">
-                  <div className="calculator-metric-card">
-                    <span>TMB</span>
-                    <strong>{Math.round(harrisResult.bmr)} kcal</strong>
-                    <small>Tu gasto basal en reposo total.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>GET</span>
-                    <strong>{Math.round(harrisResult.tdee)} kcal</strong>
-                    <small>Gasto diario segun tu actividad.</small>
-                  </div>
-                  <div className="calculator-metric-card accent">
-                    <span>Objetivo diario</span>
-                    <strong>{Math.round(harrisResult.targetCalories)} kcal</strong>
-                    <small>{harrisResult.goal.label} con ajuste automatico.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>IMC</span>
-                    <strong>{formatDecimal(harrisResult.bmi)}</strong>
-                    <small>
-                      Rango saludable estimado: {formatDecimal(harrisResult.minHealthyWeight)} a{" "}
-                      {formatDecimal(harrisResult.maxHealthyWeight)} kg.
-                    </small>
-                  </div>
-                </div>
-                <div className="calculator-results-grid">
-                  <div className="calculator-metric-card">
-                    <span>Proteina</span>
-                    <strong>{Math.round(harrisResult.proteinGrams)} g</strong>
-                    <small>{formatDecimal(harrisResult.proteinPerKg)} g/kg · {harrisResult.guidance.proteinRange}</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Grasas</span>
-                    <strong>{Math.round(harrisResult.fatGrams)} g</strong>
-                    <small>{formatDecimal(harrisResult.fatPerKg)} g/kg · equilibrio hormonal y saciedad.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Carbohidratos</span>
-                    <strong>{Math.round(harrisResult.carbGrams)} g</strong>
-                    <small>Combustible disponible tras fijar proteina y grasa.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Perfil</span>
-                    <strong>
-                      {harrisResult.age} años · {Math.round(harrisResult.weightKg)} kg
-                    </strong>
-                    <small>
-                      {Math.round(harrisResult.heightCm)} cm · factor {harrisResult.activity.factor.toFixed(3)}.
-                    </small>
-                  </div>
-                </div>
-                <div className="calculator-results-grid">
-                  <div className="calculator-metric-card">
-                    <span>Grasa estimada</span>
-                    <strong>
-                      {harrisResult.bodyFatPercentEstimate !== null ? `${formatDecimal(harrisResult.bodyFatPercentEstimate)} %` : "--"}
-                    </strong>
-                    <small>{harrisResult.guidance.bodyFatEstimate}</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Masa magra</span>
-                    <strong>{harrisResult.leanMassKg !== null ? `${formatDecimal(harrisResult.leanMassKg)} kg` : "--"}</strong>
-                    <small>Estimacion de tejido libre de grasa.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Masa grasa</span>
-                    <strong>{harrisResult.fatMassKg !== null ? `${formatDecimal(harrisResult.fatMassKg)} kg` : "--"}</strong>
-                    <small>Estimacion de grasa total corporal.</small>
-                  </div>
-                  <div className="calculator-metric-card">
-                    <span>Cintura/altura</span>
-                    <strong>
-                      {harrisResult.waistToHeightRatio !== null ? formatDecimal(harrisResult.waistToHeightRatio) : "--"}
-                    </strong>
-                    <small>{harrisResult.guidance.waistToHeight}</small>
-                  </div>
-                </div>
-                <div className="calculator-guidance-grid">
-                  <div className="calculator-guidance-card">
-                    <strong>Lectura de carbohidratos</strong>
-                    <p>{harrisResult.guidance.carbsFocus}</p>
-                  </div>
-                  <div className="calculator-guidance-card">
-                    <strong>Lectura de grasas</strong>
-                    <p>{harrisResult.guidance.fatFocus}</p>
-                  </div>
-                </div>
-                <p className="calculator-note">
-                  Referencia orientativa: usa estas calorias como punto de partida y compáralas con tu evolución real de
-                  peso, rendimiento, hambre y recuperación durante 2-3 semanas.
-                </p>
-              </>
-            ) : (
-              <p className="calculator-note">
-                Completa edad, altura y peso para ver el cálculo completo de Harris-Benedict con gasto basal, macros e
-                IMC.
-              </p>
-            )}
-          </article>
           </div>
 
-          <article className="card stack">
-            <span className="pill">Ultimos registros</span>
-            <h2>Tu historial corporal</h2>
-            {measurements.length === 0 ? (
-              <p>Aun no has registrado medidas corporales.</p>
-            ) : (
-              measurements.slice(0, 12).map((item) => (
-                <div className="session-item" key={item.id}>
-                  <strong>{formatDate(item.measured_at)}</strong>
-                  <p>
-                    Peso {item.weight_kg ?? "--"} kg · Cintura {item.waist_cm ?? "--"} cm · Pecho {item.chest_cm ?? "--"} cm
-                  </p>
-                  {item.notes ? <p>{item.notes}</p> : null}
+          <div className="body-bottom-grid">
+            <article className="card stack">
+              <span className="pill">Ultimos registros</span>
+              <h2>Tu historial corporal</h2>
+              {measurements.length === 0 ? (
+                <p>Aun no has registrado medidas corporales.</p>
+              ) : (
+                measurements.slice(0, 10).map((item) => (
+                  <div className="session-item" key={item.id}>
+                    <strong>{formatDate(item.measured_at)}</strong>
+                    <p>
+                      Peso {item.weight_kg ?? "--"} kg · Cintura {item.waist_cm ?? "--"} cm · Pecho {item.chest_cm ?? "--"} cm
+                    </p>
+                    {item.notes ? <p>{item.notes}</p> : null}
+                  </div>
+                ))
+              )}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Lectura corporal</span>
+              <h2>Lo que cambia en tu físico</h2>
+              <div className="overview-stats-grid">
+                <div className="overview-stat-tile">
+                  <strong>Peso actual</strong>
+                  <span>{latestKnownWeight === null ? "--" : `${formatDecimal(latestKnownWeight)} kg`}</span>
                 </div>
-              ))
-            )}
-          </article>
+                <div className="overview-stat-tile">
+                  <strong>Cambio de peso</strong>
+                  <span>
+                    {performanceSnapshot.weightDeltaKg === null
+                      ? "--"
+                      : `${performanceSnapshot.weightDeltaKg > 0 ? "+" : ""}${formatDecimal(performanceSnapshot.weightDeltaKg)} kg`}
+                  </span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Grasa %</strong>
+                  <span>{latestBodyFat === null ? "--" : `${formatDecimal(latestBodyFat)} %`}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Cintura</strong>
+                  <span>{latestKnownWaist === null ? "--" : `${formatDecimal(latestKnownWaist)} cm`}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Cambio cintura</strong>
+                  <span>{waistDelta === null ? "--" : `${waistDelta > 0 ? "+" : ""}${formatDecimal(waistDelta)} cm`}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Registros</strong>
+                  <span>{measurements.length}</span>
+                </div>
+              </div>
+            </article>
+          </div>
         </section>
       ) : null}
 
-      {activeTab === "charts" ? (
-        <section className="grid split dashboard-panels">
-          <article className="card stack">
-            <span className="pill">Grafica corporal</span>
-            <h2>Evolucion del peso</h2>
-            {measurementTrend.length < 2 ? (
-              <p>Necesitas al menos dos registros de medidas para ver la grafica.</p>
-            ) : (
-              <div className="chart-shell">
-                <svg className="chart-svg" viewBox="0 0 360 180">
-                  <path className="chart-line" d={buildLinePath(measurementTrend.map((item) => item.value))} />
-                </svg>
-                <div className="chart-labels">
-                  {measurementTrend.map((item) => (
-                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
-                  ))}
+      {activeTab === "progress" ? (
+        <section className="stack dashboard-panels progress-layout">
+          <div className="progress-top-grid">
+            <article className="card stack">
+              <span className="pill">Grafica corporal</span>
+              <h2>Evolucion del peso</h2>
+              {measurementTrend.length < 2 ? (
+                <p>Necesitas al menos dos registros de medidas para ver la grafica.</p>
+              ) : (
+                <div className="chart-shell">
+                  <svg className="chart-svg" viewBox="0 0 360 180">
+                    <path className="chart-line" d={buildLinePath(measurementTrend.map((item) => item.value))} />
+                  </svg>
+                  <div className="chart-labels">
+                    {measurementTrend.map((item) => (
+                      <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Carga</span>
+              <h2>Volumen por sesion</h2>
+              {volumeTrend.length < 2 ? (
+                <p>Necesitas al menos dos sesiones para ver una tendencia de carga.</p>
+              ) : (
+                <div className="chart-shell">
+                  <svg className="chart-svg" viewBox="0 0 360 180">
+                    <path className="chart-line alt" d={buildLinePath(volumeTrend.map((item) => item.value))} />
+                  </svg>
+                  <div className="chart-labels">
+                    {volumeTrend.map((item) => (
+                      <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Mejor ejercicio</span>
+              <h2>e1RM del ejercicio con más progreso</h2>
+              {topExerciseTrend.length < 2 ? (
+                <p>Necesitas al menos dos registros del mismo ejercicio para dibujar esta evolución.</p>
+              ) : (
+                <div className="chart-shell">
+                  <svg className="chart-svg" viewBox="0 0 360 180">
+                    <path className="chart-line top-progress" d={buildLinePath(topExerciseTrend.map((item) => item.value))} />
+                  </svg>
+                  <div className="chart-labels">
+                    {topExerciseTrend.map((item) => (
+                      <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Frecuencia</span>
+              <h2>Sesiones por mes</h2>
+              {frequencyTrend.length < 2 ? (
+                <p>Necesitas al menos dos meses con sesiones para ver una tendencia de frecuencia.</p>
+              ) : (
+                <div className="chart-shell">
+                  <svg className="chart-svg" viewBox="0 0 360 180">
+                    <path className="chart-line frequency" d={buildLinePath(frequencyTrend.map((item) => item.value))} />
+                  </svg>
+                  <div className="chart-labels">
+                    {frequencyTrend.map((item) => (
+                      <span key={`${item.label}-${item.value}`}>{item.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
+          </div>
+
+          <div className="progress-bottom-grid">
+            <article className="card stack">
+              <span className="pill">Volumen semanal</span>
+              <h2>Bajo, óptimo o alto por grupo</h2>
+              <div className="volume-status-grid compact">
+                {visibleWeeklyVolume.map((item) => (
+                  <div className="volume-status-card compact" key={item.group}>
+                    <div className="volume-status-header">
+                      <strong>{item.group}</strong>
+                      <span className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</span>
+                    </div>
+                    <p>{item.weeklySets} series</p>
+                    <small>
+                      Objetivo {item.target.min}-{item.target.max}
+                    </small>
+                  </div>
+                ))}
+              </div>
+              {hiddenVolumeCount > 0 ? <p className="compact-copy">Y {hiddenVolumeCount} grupos más dentro del informe.</p> : null}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Estado muscular</span>
+              <h2>En que fase va cada grupo</h2>
+              <div className="muscle-phase-grid compact">
+                {visibleMuscleSummary.map((item) => (
+                  <div className="muscle-phase-card compact" key={item.group}>
+                    <div className="muscle-phase-header">
+                      <strong>{item.group}</strong>
+                      <span className={`status-badge ${item.stale ? "bajo" : "optimo"}`}>
+                        {item.stale ? "2 sesiones sin tocar" : "Activo"}
+                      </span>
+                    </div>
+                    <p>{item.phase}</p>
+                  </div>
+                ))}
+              </div>
+              {hiddenMuscleCount > 0 ? <p className="compact-copy">Y {hiddenMuscleCount} grupos más en el informe completo.</p> : null}
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Récords</span>
+              <h2>Marcas destacadas</h2>
+              <div className="summary-list compact">
+                <div className="compact-summary-card">
+                  <strong>Serie más pesada</strong>
+                  <span>
+                    {performanceSnapshot.personalRecords.heaviestSet
+                      ? `${performanceSnapshot.personalRecords.heaviestSet.exerciseName} · ${performanceSnapshot.personalRecords.heaviestSet.value.toFixed(1)} kg`
+                      : "--"}
+                  </span>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Mejor e1RM</strong>
+                  <span>
+                    {performanceSnapshot.personalRecords.bestEstimatedRm
+                      ? `${performanceSnapshot.personalRecords.bestEstimatedRm.exerciseName} · ${performanceSnapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} kg`
+                      : "--"}
+                  </span>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Sesión con más volumen</strong>
+                  <span>
+                    {performanceSnapshot.personalRecords.highestVolumeSession
+                      ? `${performanceSnapshot.personalRecords.highestVolumeSession.sessionTitle} · ${performanceSnapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
+                      : "--"}
+                  </span>
                 </div>
               </div>
-            )}
-          </article>
+            </article>
 
-          <article className="card stack">
-            <span className="pill">Grafica de carga</span>
-            <h2>Volumen por sesion</h2>
-            {volumeTrend.length < 2 ? (
-              <p>Necesitas al menos dos sesiones para ver una tendencia de carga.</p>
-            ) : (
-              <div className="chart-shell">
-                <svg className="chart-svg" viewBox="0 0 360 180">
-                  <path className="chart-line alt" d={buildLinePath(volumeTrend.map((item) => item.value))} />
-                </svg>
-                <div className="chart-labels">
-                  {volumeTrend.map((item) => (
-                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
-                  ))}
+            <article className="card stack">
+              <span className="pill">Ranking</span>
+              <h2>Top ejercicios con mejor evolución</h2>
+              {performanceSnapshot.exerciseReportRows.length === 0 ? (
+                <p>Todavía no hay suficientes repeticiones históricas del mismo ejercicio para comparar progreso.</p>
+              ) : (
+                performanceSnapshot.exerciseReportRows.slice(0, 6).map((item, index) => (
+                  <div className="session-item compact" key={`${item.exerciseId}-${item.lastDate ?? index}`}>
+                    <strong>
+                      {index + 1}. {item.exerciseName}
+                    </strong>
+                    <p>{item.muscleGroup} · {item.trend === "up" ? "↑" : item.trend === "down" ? "↓" : "→"} tendencia</p>
+                    <p>
+                      e1RM {item.firstEstimatedRm === null ? "--" : item.firstEstimatedRm.toFixed(1)} →{" "}
+                      {item.latestEstimatedRm === null ? "--" : item.latestEstimatedRm.toFixed(1)} kg
+                    </p>
+                    <p>
+                      {item.deltaKg === null ? "--" : item.deltaKg.toFixed(1)} kg ·{" "}
+                      {item.deltaPercent === null ? "--" : `${item.deltaPercent.toFixed(1)}%`}
+                    </p>
+                  </div>
+                ))
+              )}
+            </article>
+          </div>
+        </section>
+      ) : null}
+
+      {activeTab === "reports" ? (
+        <section className="stack dashboard-panels reports-layout">
+          <div className="reports-top-grid">
+            <article className="card stack">
+              <span className="pill">Exportes</span>
+              <h2>Informe científico completo</h2>
+              <p>
+                Descarga tu resumen de rendimiento con evolución por semanas, ejercicios, grupos musculares, conclusiones automáticas y sugerencias para el siguiente bloque.
+              </p>
+              <div className="hero-actions">
+                <button
+                  className="button secondary"
+                  onClick={() => downloadPerformanceWorkbook(sessions, measurements, user?.full_name ?? user?.email)}
+                  type="button"
+                >
+                  Descargar Excel
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => downloadPerformancePdf(sessions, measurements, user?.full_name ?? user?.email)}
+                  type="button"
+                >
+                  Descargar PDF
+                </button>
+              </div>
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Estado del informe</span>
+              <h2>Qué tan fiable es ya tu muestra</h2>
+              <div className="overview-stats-grid">
+                <div className="overview-stat-tile">
+                  <strong>Semanas útiles</strong>
+                  <span>{performanceSnapshot.totalWeeksTracked}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Sesiones</strong>
+                  <span>{performanceSnapshot.totalSessions}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Fiabilidad</strong>
+                  <span>{performanceSnapshot.dataReadiness.replace("_", " ")}</span>
+                </div>
+                <div className="overview-stat-tile">
+                  <strong>Ejercicios evaluables</strong>
+                  <span>{performanceSnapshot.exerciseReportRows.filter((item) => item.deltaPercent !== null).length}</span>
                 </div>
               </div>
-            )}
-          </article>
+            </article>
+          </div>
 
-          <article className="card stack">
-            <span className="pill">RIR</span>
-            <h2>Evolucion del RIR medio</h2>
-            {rirTrend.length < 2 ? (
-              <p>Necesitas al menos dos sesiones para ver la evolucion del RIR medio.</p>
-            ) : (
-              <div className="chart-shell">
-                <svg className="chart-svg" viewBox="0 0 360 180">
-                  <path className="chart-line rir" d={buildLinePath(rirTrend.map((item) => item.value))} />
-                </svg>
-                <div className="chart-labels">
-                  {rirTrend.map((item) => (
-                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
-                  ))}
+          <div className="reports-bottom-grid">
+            <article className="card stack">
+              <span className="pill">Conclusiones</span>
+              <h2>Lectura automática del bloque</h2>
+              <div className="summary-list compact">
+                {performanceSnapshot.recommendations.map((item) => (
+                  <div className={`compact-summary-card report-recommendation-card ${item.tone}`} key={item.title}>
+                    <strong>{item.title}</strong>
+                    <small>{item.message}</small>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="card stack">
+              <span className="pill">Contenido</span>
+              <h2>Lo que incluyen Excel y PDF</h2>
+              <div className="summary-list compact">
+                <div className="compact-summary-card">
+                  <strong>Por ejercicio</strong>
+                  <small>Mejor marca, e1RM inicial y actual, tendencia, semanas en que apareció y evolución estimada.</small>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Por semana</strong>
+                  <small>Sesiones, series, volumen, RIR medio y comparativa de carga para ver estabilidad o estancamiento.</small>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Por músculo</strong>
+                  <small>Distribución del trabajo, grupo estrella, rezagado y lectura del reparto de volumen total.</small>
+                </div>
+                <div className="compact-summary-card">
+                  <strong>Mensaje final</strong>
+                  <small>Si el bloque es corto te lo digo; si ya hay suficiente muestra, el informe te orienta para el siguiente ciclo.</small>
                 </div>
               </div>
-            )}
-          </article>
-
-          <article className="card stack">
-            <span className="pill">Frecuencia</span>
-            <h2>Sesiones por mes</h2>
-            {frequencyTrend.length < 2 ? (
-              <p>Necesitas al menos dos meses con sesiones para ver una tendencia de frecuencia.</p>
-            ) : (
-              <div className="chart-shell">
-                <svg className="chart-svg" viewBox="0 0 360 180">
-                  <path className="chart-line frequency" d={buildLinePath(frequencyTrend.map((item) => item.value))} />
-                </svg>
-                <div className="chart-labels">
-                  {frequencyTrend.map((item) => (
-                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </article>
-
-          <article className="card stack">
-            <span className="pill">Mejor ejercicio</span>
-            <h2>e1RM del ejercicio con más progreso</h2>
-            {topExerciseTrend.length < 2 ? (
-              <p>Necesitas al menos dos registros del mismo ejercicio para dibujar esta evolución.</p>
-            ) : (
-              <div className="chart-shell">
-                <svg className="chart-svg" viewBox="0 0 360 180">
-                  <path className="chart-line top-progress" d={buildLinePath(topExerciseTrend.map((item) => item.value))} />
-                </svg>
-                <div className="chart-labels">
-                  {topExerciseTrend.map((item) => (
-                    <span key={`${item.label}-${item.value}`}>{item.label}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </article>
-
-          <article className="card stack">
-            <span className="pill">Ranking</span>
-            <h2>Top ejercicios con mejor evolución</h2>
-            {performanceSnapshot.topImprovements.length === 0 ? (
-              <p>Todavía no hay suficientes repeticiones históricas del mismo ejercicio para comparar progreso.</p>
-            ) : (
-              performanceSnapshot.topImprovements.map((item, index) => (
-                <div className="session-item" key={`${item.exerciseId}-${item.lastDate}`}>
-                  <strong>
-                    {index + 1}. {item.exerciseName}
-                  </strong>
-                  <p>{item.muscleGroup}</p>
-                  <p>
-                    e1RM {item.startEstimatedRm.toFixed(1)} → {item.latestEstimatedRm.toFixed(1)} kg
-                  </p>
-                  <p>
-                    {item.deltaKg.toFixed(1)} kg · {item.deltaPercent.toFixed(1)}%
-                  </p>
-                </div>
-              ))
-            )}
-          </article>
+            </article>
+          </div>
         </section>
       ) : null}
     </main>

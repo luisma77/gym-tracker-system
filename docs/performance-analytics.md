@@ -55,16 +55,35 @@ Se destacan:
 
 ## Visualización actual en dashboard
 
-- evolución del peso corporal
-- volumen por sesión
-- RIR medio
-- sesiones por mes
-- e1RM del ejercicio con más progreso
-- ranking de ejercicios con mejor evolución
-- tarjeta de ejercicio favorito
-- tarjeta de grupo estrella y grupo rezagado
-- tarjeta de récords
-- calculadora Harris-Benedict en la pestaña `Medidas`
+La navegación se ha dividido para evitar columnas largas y pantallas demasiado saturadas:
+
+- `Resumen`
+  - bloque actual
+  - siguiente día
+  - mayor progreso
+  - ejercicio favorito
+  - mensajes cortos de qué vigilar ahora
+- `Sesion`
+  - registro completo del día siguiendo la estructura del Excel
+- `Cuerpo`
+  - formulario compacto de medidas
+  - calculadora Harris-Benedict
+  - leyenda interpretativa separada de los resultados
+  - historial corporal
+- `Progreso`
+  - evolución del peso corporal
+  - volumen por sesión
+  - sesiones por mes
+  - e1RM del ejercicio con más progreso
+  - volumen semanal por grupo
+  - estado muscular por grupo
+  - récords
+  - ranking de ejercicios con mejor evolución
+- `Informes`
+  - estado de la muestra
+  - exportes
+  - recomendaciones automáticas
+  - resumen de contenido del PDF y Excel
 
 ## Calculadora Harris-Benedict
 
@@ -97,11 +116,13 @@ Detalles de implementación:
 Incluye:
 
 - nombre del atleta
-- resumen general
+- resumen general del bloque
+- fiabilidad actual de la muestra
+- gráficas de peso, volumen, RIR/frecuencia según datos
+- distribución muscular visual
+- ranking de ejercicios por mejora
 - conclusiones automáticas
-- tendencias
-- ranking de progreso
-- récords
+- recomendaciones para el siguiente bloque o rutina
 - historial resumido de sesiones y medidas
 
 ### Excel
@@ -116,6 +137,11 @@ Incluye hojas:
 - `Favorito`
 - `Records`
 - `Musculos`
+- `Semanas`
+- `Ejercicios`
+- `Ejercicio_semana`
+- `Distribucion`
+- `Recomendaciones`
 - `Conclusiones`
 - `Tendencias`
 - `Datos_graficas`
