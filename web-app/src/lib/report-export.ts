@@ -87,11 +87,17 @@ export function downloadBaseExcel() {
   anchor.click();
 }
 
-export function downloadPerformanceWorkbook(sessions: WorkoutSession[], measurements: BodyMeasurement[]) {
+export function downloadPerformanceWorkbook(
+  sessions: WorkoutSession[],
+  measurements: BodyMeasurement[],
+  userName?: string
+) {
   const snapshot = buildPerformanceSnapshot(sessions, measurements);
   const workbook = XLSX.utils.book_new();
+  const athleteName = userName?.trim() || "Usuario Gym Tracker";
 
   const summaryRows = [
+    { indicador: "Atleta", valor: athleteName },
     { indicador: "Fecha del informe", valor: buildFileDateSuffix() },
     { indicador: "Total de sesiones", valor: snapshot.totalSessions },
     { indicador: "Total de series", valor: snapshot.totalSets },
@@ -105,6 +111,16 @@ export function downloadPerformanceWorkbook(sessions: WorkoutSession[], measurem
       valor: snapshot.bestImprovement
         ? `${snapshot.bestImprovement.exerciseName} (${snapshot.bestImprovement.deltaPercent.toFixed(1)}%)`
         : "Sin datos suficientes",
+    },
+    {
+      indicador: "Ejercicio favorito",
+      valor: snapshot.favoriteExercise
+        ? `${snapshot.favoriteExercise.exerciseName} (${snapshot.favoriteExercise.timesPerformed} veces)`
+        : "Sin datos suficientes",
+    },
+    {
+      indicador: "Motivo del favorito",
+      valor: snapshot.favoriteExercise?.reason ?? "Todavía no hay suficientes registros para detectarlo.",
     },
   ];
 
@@ -156,11 +172,81 @@ export function downloadPerformanceWorkbook(sessions: WorkoutSession[], measurem
     ultima_fecha: formatReportDate(item.lastDate),
   }));
 
+  const favoriteRows = snapshot.favoriteExercise
+    ? [
+        {
+          atleta: athleteName,
+          ejercicio: snapshot.favoriteExercise.exerciseName,
+          grupo: snapshot.favoriteExercise.muscleGroup,
+          veces_registrado: snapshot.favoriteExercise.timesPerformed,
+          series_totales: snapshot.favoriteExercise.totalSets,
+          progreso_kg_e1rm: Number(snapshot.favoriteExercise.progressKg.toFixed(1)),
+          progreso_pct_e1rm: Number(snapshot.favoriteExercise.progressPercent.toFixed(1)),
+          razon: snapshot.favoriteExercise.reason,
+        },
+      ]
+    : [
+        {
+          atleta: athleteName,
+          ejercicio: "Sin datos suficientes",
+          grupo: "-",
+          veces_registrado: 0,
+          series_totales: 0,
+          progreso_kg_e1rm: 0,
+          progreso_pct_e1rm: 0,
+          razon: "Necesitas más sesiones repetidas del mismo ejercicio para detectarlo.",
+        },
+      ];
+
   const trendRows = [
     ...snapshot.weightTrend.map((item) => ({ serie: "Peso corporal", fecha: item.label, valor: item.value })),
     ...snapshot.sessionVolumeTrend.map((item) => ({ serie: "Volumen por sesión", fecha: item.label, valor: item.value })),
     ...snapshot.sessionRirTrend.map((item) => ({ serie: "RIR medio", fecha: item.label, valor: item.value })),
+    ...snapshot.sessionFrequencyTrend.map((item) => ({ serie: "Sesiones por mes", fecha: item.label, valor: item.value })),
     ...snapshot.topExerciseTrend.map((item) => ({ serie: "e1RM mejor ejercicio", fecha: item.label, valor: item.value })),
+  ];
+
+  const chartReadyRows = [
+    ...snapshot.weightTrend.map((item) => ({
+      fecha: item.label,
+      peso_corporal: item.value,
+      volumen_sesion: "",
+      rir_medio: "",
+      sesiones_mes: "",
+      e1rm_mejor_ejercicio: "",
+    })),
+    ...snapshot.sessionVolumeTrend.map((item) => ({
+      fecha: item.label,
+      peso_corporal: "",
+      volumen_sesion: item.value,
+      rir_medio: "",
+      sesiones_mes: "",
+      e1rm_mejor_ejercicio: "",
+    })),
+    ...snapshot.sessionRirTrend.map((item) => ({
+      fecha: item.label,
+      peso_corporal: "",
+      volumen_sesion: "",
+      rir_medio: item.value,
+      sesiones_mes: "",
+      e1rm_mejor_ejercicio: "",
+    })),
+    ...snapshot.sessionFrequencyTrend.map((item) => ({
+      fecha: item.label,
+      peso_corporal: "",
+      volumen_sesion: "",
+      rir_medio: "",
+      sesiones_mes: item.value,
+      e1rm_mejor_ejercicio: "",
+    })),
+    ...snapshot.topExerciseTrend.map((item) => ({
+      fecha: item.label,
+      peso_corporal: "",
+      volumen_sesion: "",
+      rir_medio: "",
+      sesiones_mes: "",
+      e1rm_mejor_ejercicio: item.value,
+    })),
   ];
 
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), "Resumen");
@@ -168,7 +254,9 @@ export function downloadPerformanceWorkbook(sessions: WorkoutSession[], measurem
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(setRows), "Series");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(measurementRows), "Medidas");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(progressionRows), "Progresion");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(favoriteRows), "Favorito");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(trendRows), "Tendencias");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(chartReadyRows), "Datos_graficas");
 
   const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   downloadBlob(
@@ -179,9 +267,14 @@ export function downloadPerformanceWorkbook(sessions: WorkoutSession[], measurem
   );
 }
 
-export function downloadPerformancePdf(sessions: WorkoutSession[], measurements: BodyMeasurement[]) {
+export function downloadPerformancePdf(
+  sessions: WorkoutSession[],
+  measurements: BodyMeasurement[],
+  userName?: string
+) {
   const snapshot = buildPerformanceSnapshot(sessions, measurements);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const athleteName = userName?.trim() || "Usuario Gym Tracker";
 
   doc.setFillColor(15, 118, 110);
   doc.rect(0, 0, 210, 34, "F");
@@ -190,7 +283,7 @@ export function downloadPerformancePdf(sessions: WorkoutSession[], measurements:
   doc.setFontSize(22);
   doc.text("Informe de rendimiento", 14, 18);
   doc.setFontSize(11);
-  doc.text(`Gym Tracker · ${buildFileDateSuffix()}`, 14, 26);
+  doc.text(`Gym Tracker · ${buildFileDateSuffix()} · ${athleteName}`, 14, 26);
 
   doc.setTextColor(30, 26, 20);
   doc.setFontSize(12);
@@ -217,6 +310,12 @@ export function downloadPerformancePdf(sessions: WorkoutSession[], measurements:
         "Mayor progreso",
         snapshot.bestImprovement
           ? `${snapshot.bestImprovement.exerciseName} (${snapshot.bestImprovement.deltaPercent.toFixed(1)}%)`
+          : "Sin datos suficientes",
+      ],
+      [
+        "Ejercicio favorito",
+        snapshot.favoriteExercise
+          ? `${snapshot.favoriteExercise.exerciseName} · ${snapshot.favoriteExercise.reason}`
           : "Sin datos suficientes",
       ],
     ],

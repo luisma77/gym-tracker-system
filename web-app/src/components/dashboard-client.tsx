@@ -1037,10 +1037,18 @@ export function DashboardClient() {
           <button className="button secondary" onClick={downloadBaseExcel} type="button">
             Descargar Excel base
           </button>
-          <button className="button secondary" onClick={() => downloadPerformanceWorkbook(sessions, measurements)} type="button">
+          <button
+            className="button secondary"
+            onClick={() => downloadPerformanceWorkbook(sessions, measurements, user?.full_name ?? user?.email)}
+            type="button"
+          >
             Informe Excel
           </button>
-          <button className="button secondary" onClick={() => downloadPerformancePdf(sessions, measurements)} type="button">
+          <button
+            className="button secondary"
+            onClick={() => downloadPerformancePdf(sessions, measurements, user?.full_name ?? user?.email)}
+            type="button"
+          >
             Informe PDF
           </button>
         </div>
@@ -1155,6 +1163,24 @@ export function DashboardClient() {
               </div>
             ) : (
               <p>Necesitas al menos dos exposiciones del mismo ejercicio para detectar el mayor progreso.</p>
+            )}
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Ejercicio favorito</span>
+            <h2>El movimiento que más has hecho y consolidado</h2>
+            {performanceSnapshot.favoriteExercise ? (
+              <div className="session-item">
+                <strong>{performanceSnapshot.favoriteExercise.exerciseName}</strong>
+                <p>{performanceSnapshot.favoriteExercise.muscleGroup}</p>
+                <p>
+                  {performanceSnapshot.favoriteExercise.timesPerformed} exposiciones ·{" "}
+                  {performanceSnapshot.favoriteExercise.totalSets} series
+                </p>
+                <p>{performanceSnapshot.favoriteExercise.reason}</p>
+              </div>
+            ) : (
+              <p>Todavía no hay suficientes datos para detectar tu ejercicio favorito.</p>
             )}
           </article>
 

@@ -28,6 +28,17 @@ export type ExerciseImprovement = {
   lastDate: string;
 };
 
+export type FavoriteExercise = {
+  exerciseId: number;
+  exerciseName: string;
+  muscleGroup: string;
+  timesPerformed: number;
+  totalSets: number;
+  progressPercent: number;
+  progressKg: number;
+  reason: string;
+};
+
 export type PerformanceSnapshot = {
   totalSessions: number;
   totalSets: number;
@@ -37,6 +48,7 @@ export type PerformanceSnapshot = {
   latestWeightKg: number | null;
   weightDeltaKg: number | null;
   bestImprovement: ExerciseImprovement | null;
+  favoriteExercise: FavoriteExercise | null;
   topImprovements: ExerciseImprovement[];
   weightTrend: TrendPoint[];
   sessionVolumeTrend: TrendPoint[];
@@ -174,6 +186,91 @@ function buildSessionFrequencyTrend(sessions: WorkoutSession[]) {
   return [...buckets.entries()].map(([label, value]) => ({ label, value }));
 }
 
+function buildFavoriteExercise(
+  sessions: WorkoutSession[],
+  improvementsByExerciseId: Map<number, ExerciseImprovement>
+) {
+  const usage = new Map<
+    number,
+    {
+      exerciseName: string;
+      muscleGroup: string;
+      timesPerformed: number;
+      totalSets: number;
+    }
+  >();
+
+  sessions.forEach((session) => {
+    const touchedInSession = new Set<number>();
+
+    session.sets.forEach((setItem) => {
+      const current = usage.get(setItem.exercise_id) ?? {
+        exerciseName: setItem.exercise_name,
+        muscleGroup: setItem.muscle_group,
+        timesPerformed: 0,
+        totalSets: 0,
+      };
+
+      current.totalSets += 1;
+      if (!touchedInSession.has(setItem.exercise_id)) {
+        current.timesPerformed += 1;
+        touchedInSession.add(setItem.exercise_id);
+      }
+
+      usage.set(setItem.exercise_id, current);
+    });
+  });
+
+  const ranked = [...usage.entries()]
+    .map(([exerciseId, item]) => {
+      const improvement = improvementsByExerciseId.get(exerciseId);
+      const progressPercent = improvement?.deltaPercent ?? 0;
+      const progressKg = improvement?.deltaKg ?? 0;
+      const score = item.timesPerformed * 10 + item.totalSets * 2 + Math.max(progressPercent, 0);
+
+      return {
+        exerciseId,
+        exerciseName: item.exerciseName,
+        muscleGroup: item.muscleGroup,
+        timesPerformed: item.timesPerformed,
+        totalSets: item.totalSets,
+        progressPercent,
+        progressKg,
+        score,
+      };
+    })
+    .sort((left, right) => right.score - left.score);
+
+  const winner = ranked[0];
+  if (!winner) {
+    return null;
+  }
+
+  const reasonParts = [
+    `lo registraste ${winner.timesPerformed} veces`,
+    `acumulaste ${winner.totalSets} series`,
+  ];
+
+  if (winner.progressPercent > 0) {
+    reasonParts.push(
+      `y además progresó ${winner.progressKg.toFixed(1)} kg de e1RM (${winner.progressPercent.toFixed(1)}%)`
+    );
+  } else {
+    reasonParts.push("y fue el movimiento más repetido de tu historial");
+  }
+
+  return {
+    exerciseId: winner.exerciseId,
+    exerciseName: winner.exerciseName,
+    muscleGroup: winner.muscleGroup,
+    timesPerformed: winner.timesPerformed,
+    totalSets: winner.totalSets,
+    progressPercent: winner.progressPercent,
+    progressKg: winner.progressKg,
+    reason: `Ha sido tu ejercicio favorito porque ${reasonParts.join(", ")}.`,
+  } satisfies FavoriteExercise;
+}
+
 export function buildPerformanceSnapshot(
   sessions: WorkoutSession[],
   measurements: BodyMeasurement[]
@@ -252,6 +349,8 @@ export function buildPerformanceSnapshot(
     .sort((left, right) => right.deltaPercent - left.deltaPercent);
 
   const bestImprovement = topImprovements[0] ?? null;
+  const improvementsByExerciseId = new Map(topImprovements.map((item) => [item.exerciseId, item]));
+  const favoriteExercise = buildFavoriteExercise(sessions, improvementsByExerciseId);
 
   return {
     totalSessions: sessions.length,
@@ -262,6 +361,7 @@ export function buildPerformanceSnapshot(
     latestWeightKg,
     weightDeltaKg,
     bestImprovement,
+    favoriteExercise,
     topImprovements: topImprovements.slice(0, 6),
     weightTrend,
     sessionVolumeTrend,
