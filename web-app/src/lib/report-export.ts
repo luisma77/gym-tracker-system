@@ -33,6 +33,16 @@ function appendSheet(workbook: XLSX.WorkBook, name: string, rows: Array<Record<s
   XLSX.utils.book_append_sheet(workbook, sheet, name);
 }
 
+function appendSignatureSheet(workbook: XLSX.WorkBook, athleteName: string, label: string) {
+  appendSheet(workbook, "Firma", [
+    { campo: "Documento", valor: label },
+    { campo: "Hecho por", valor: athleteName },
+    { campo: "App", valor: "Gym Tracker" },
+    { campo: "Fecha", valor: buildFileDateSuffix() },
+    { campo: "Marca", valor: `Preparado para ${athleteName}` },
+  ]);
+}
+
 function getTrendArrow(row: ExerciseReportRow) {
   if (row.trend === "up") {
     return "↑";
@@ -240,11 +250,33 @@ function buildBarChartDataUrl(title: string, items: ExerciseReportRow[]) {
   return canvas.toDataURL("image/png");
 }
 
-export function downloadBaseExcel() {
-  const anchor = document.createElement("a");
-  anchor.href = "/downloads/Gym_Tracker.xlsx";
-  anchor.download = "Gym_Tracker_base.xlsx";
-  anchor.click();
+export async function downloadBaseExcel(userName?: string) {
+  const athleteName = userName?.trim() || "Usuario Gym Tracker";
+  const response = await fetch("/downloads/Gym_Tracker.xlsx");
+
+  if (!response.ok) {
+    throw new Error("No se ha encontrado el Excel base para descargar.");
+  }
+
+  const buffer = await response.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: "array" });
+  workbook.Props = {
+    ...(workbook.Props ?? {}),
+    Author: athleteName,
+    Company: "Gym Tracker",
+    Title: "Plantilla base Gym Tracker",
+    Subject: "Plantilla base personalizada",
+    Comments: `Plantilla base preparada para ${athleteName}`,
+  };
+  appendSignatureSheet(workbook, athleteName, "Excel base");
+
+  const output = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  downloadBlob(
+    new Blob([output], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    `Gym_Tracker_base_${athleteName.replace(/\s+/g, "_")}.xlsx`
+  );
 }
 
 export function downloadPerformanceWorkbook(
@@ -255,6 +287,13 @@ export function downloadPerformanceWorkbook(
   const snapshot = buildPerformanceSnapshot(sessions, measurements);
   const workbook = XLSX.utils.book_new();
   const athleteName = userName?.trim() || "Usuario Gym Tracker";
+  workbook.Props = {
+    Author: athleteName,
+    Company: "Gym Tracker",
+    Title: "Informe científico de rendimiento",
+    Subject: "Informe de progreso",
+    Comments: `Informe generado para ${athleteName}`,
+  };
 
   const summaryRows = [
     { indicador: "Atleta", valor: athleteName },
@@ -535,6 +574,7 @@ export function downloadPerformanceWorkbook(
   appendSheet(workbook, "Conclusiones", conclusionRows);
   appendSheet(workbook, "Tendencias", trendRows);
   appendSheet(workbook, "Datos_graficas", chartReadyRows);
+  appendSignatureSheet(workbook, athleteName, "Informe Excel");
 
   const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   downloadBlob(
@@ -717,6 +757,16 @@ export function downloadPerformancePdf(
         ])
       : [["-", "Sin medidas todavía", "-", "-", "-", "-", "-"]],
   });
+
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(96, 96, 96);
+    doc.text(`Hecho por ${athleteName} · Gym Tracker`, 14, 292);
+    doc.text(`Página ${page}/${pageCount}`, 176, 292, { align: "right" });
+  }
 
   doc.save(`informe-rendimiento-${buildFileDateSuffix()}.pdf`);
 }

@@ -59,6 +59,7 @@ Para reducir la probabilidad de carpeta no deseada conviene:
 Además de `schema.sql` y `seed.sql`, la app ya espera esta migración incremental:
 
 - `web-app/supabase/migrations/2026-04-21-auth-profile-upgrades.sql`
+- `web-app/supabase/migrations/2026-04-21-legal-contact-messages.sql`
 
 Esa migración añade:
 
@@ -83,6 +84,16 @@ Ese callback evita que el usuario termine en una URL fea o vacía al confirmar e
 ## Exportes y analítica ya desplegados
 
 - descarga del Excel base del sistema
+- el Excel base se sirve desde `web-app/public/downloads/Gym_Tracker.xlsx`
+- la descarga base ya no debe devolver `404`
+- los Excel y PDF incluyen marca de autor/atleta
 - informe Excel de rendimiento con hojas de resumen, sesiones, series, medidas, progreso, favorito, récords, músculos, conclusiones y datos para gráficas
 - informe PDF de rendimiento con nombre del atleta, conclusiones automáticas, récords y tendencias
 - dashboard con métricas de ejercicio favorito, mayor progreso, racha de semanas, grupo estrella y grupo rezagado
+
+## Contacto legal
+
+- existe una página interna `/contact`
+- el footer enlaza a esa página en lugar de `mailto:`
+- los mensajes se guardan en Supabase en `legal_contact_messages`
+- si se quiere aviso por email al propietario, el siguiente paso sería añadir una función/SMTP sobre esa tabla

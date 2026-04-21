@@ -1063,22 +1063,17 @@ export function DashboardClient() {
           <button className="button primary" onClick={() => setActiveTab("workout")} type="button">
             Registrar sesion
           </button>
-          <button className="button secondary" onClick={downloadBaseExcel} type="button">
+          <button
+            className="button secondary"
+            onClick={() => downloadBaseExcel(user?.full_name ?? user?.email).catch((downloadError) => {
+              setError(downloadError instanceof Error ? downloadError.message : "No se ha podido descargar el Excel base.");
+            })}
+            type="button"
+          >
             Descargar Excel base
           </button>
-          <button
-            className="button secondary"
-            onClick={() => downloadPerformanceWorkbook(sessions, measurements, user?.full_name ?? user?.email)}
-            type="button"
-          >
-            Informe Excel
-          </button>
-          <button
-            className="button secondary"
-            onClick={() => downloadPerformancePdf(sessions, measurements, user?.full_name ?? user?.email)}
-            type="button"
-          >
-            Informe PDF
+          <button className="button secondary" onClick={() => setActiveTab("reports")} type="button">
+            Abrir informes
           </button>
         </div>
       </section>

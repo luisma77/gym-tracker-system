@@ -116,6 +116,7 @@ Detalles de implementación:
 Incluye:
 
 - nombre del atleta
+- marca visible en el pie de cada página (`Hecho por ...`)
 - resumen general del bloque
 - fiabilidad actual de la muestra
 - gráficas de peso, volumen, RIR/frecuencia según datos
@@ -145,6 +146,12 @@ Incluye hojas:
 - `Conclusiones`
 - `Tendencias`
 - `Datos_graficas`
+- `Firma`
+
+Además:
+
+- el Excel base también se descarga ya personalizado
+- tanto el Excel base como el informe Excel llevan marca de autor y fecha
 
 ## Limitación actual
 

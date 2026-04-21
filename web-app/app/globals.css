@@ -462,12 +462,14 @@ main {
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+  align-items: start;
 }
 
 .overview-bottom-grid {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .measurements-top-grid {
@@ -480,6 +482,7 @@ main {
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
 }
 
 .body-side-stack,
@@ -497,12 +500,14 @@ main {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .overview-highlight-grid {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .overview-summary-card {
@@ -1260,6 +1265,20 @@ main {
   display: grid;
   gap: 8px;
   align-content: start;
+}
+
+.site-footer-links a {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.site-footer-links a:focus-visible {
+  outline: 2px solid rgba(15, 118, 110, 0.28);
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 
 .danger-box {

@@ -62,6 +62,13 @@ export type BodyMeasurement = {
   notes: string | null;
 };
 
+export type LegalContactPayload = {
+  full_name: string;
+  email: string;
+  subject: string;
+  message: string;
+};
+
 export class ApiRequestError extends Error {
   fieldErrors: Record<string, string>;
 
@@ -738,6 +745,49 @@ export async function createMeasurement(
     arm_cm: data.arm_cm === null ? null : Number(data.arm_cm),
     thigh_cm: data.thigh_cm === null ? null : Number(data.thigh_cm),
   } satisfies BodyMeasurement;
+}
+
+export async function createLegalContactMessage(payload: LegalContactPayload) {
+  ensureEnv();
+
+  const trimmedPayload = {
+    full_name: payload.full_name.trim(),
+    email: payload.email.trim().toLowerCase(),
+    subject: payload.subject.trim(),
+    message: payload.message.trim(),
+  };
+
+  if (!trimmedPayload.full_name || !trimmedPayload.email || !trimmedPayload.subject || !trimmedPayload.message) {
+    throw new ApiRequestError("Completa nombre, email, asunto y mensaje.");
+  }
+
+  const {
+    data: { user },
+  } = await supabase().auth.getUser();
+
+  const { error } = await db().from("legal_contact_messages").insert({
+    user_id: user?.id ?? null,
+    full_name: trimmedPayload.full_name,
+    email: trimmedPayload.email,
+    subject: trimmedPayload.subject,
+    message: trimmedPayload.message,
+  });
+
+  if (error) {
+    const missingTable =
+      error.message.toLowerCase().includes("relation") ||
+      error.message.toLowerCase().includes("legal_contact_messages");
+
+    if (missingTable) {
+      throw new ApiRequestError(
+        "Falta aplicar la migración de Supabase para guardar mensajes legales."
+      );
+    }
+
+    throw new ApiRequestError(error.message);
+  }
+
+  return { message: "Tu mensaje se ha enviado correctamente." };
 }
 
 export async function changePassword(_token: string, _current_password: string, new_password: string) {

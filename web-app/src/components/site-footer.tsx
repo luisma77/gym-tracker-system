@@ -24,8 +24,8 @@ export function SiteFooter() {
           <strong>Uso</strong>
           <Link href="/">Inicio</Link>
           <Link href="/dashboard">Dashboard</Link>
-          <Link href="/settings">Ajustes</Link>
-          <a href="mailto:legal@gymtracker.local">Contacto legal</a>
+          <Link href="/settings">Perfil y ajustes</Link>
+          <Link href="/contact">Contacto legal</Link>
         </div>
       </div>
     </footer>
