@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthSessionSync } from "@/components/auth-session-sync";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
+        <AuthSessionSync />
         <SiteHeader />
         {children}
         <SiteFooter />

@@ -15,12 +15,20 @@ create table if not exists public.exercise_catalog (
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
+  username text,
   full_name text,
   current_week integer not null default 1,
   block_type text not null default 'HIP' check (block_type in ('HIP', 'FUE')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.profiles
+  add column if not exists username text;
+
+create unique index if not exists idx_profiles_username_unique
+  on public.profiles (lower(username))
+  where username is not null;
 
 create table if not exists public.workout_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -97,6 +105,56 @@ for update
 to authenticated
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+create or replace function public.resolve_login_identifier(login_identifier text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  normalized_identifier text := lower(trim(login_identifier));
+  resolved_email text;
+begin
+  if normalized_identifier is null or normalized_identifier = '' then
+    return null;
+  end if;
+
+  if position('@' in normalized_identifier) > 0 then
+    return normalized_identifier;
+  end if;
+
+  select email
+  into resolved_email
+  from public.profiles
+  where lower(username) = normalized_identifier
+  limit 1;
+
+  return resolved_email;
+end;
+$$;
+
+grant execute on function public.resolve_login_identifier(text) to anon, authenticated;
+
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  current_user_id uuid := auth.uid();
+begin
+  if current_user_id is null then
+    raise exception 'No authenticated user found';
+  end if;
+
+  delete from auth.users
+  where id = current_user_id;
+end;
+$$;
+
+grant execute on function public.delete_my_account() to authenticated;
 
 create policy "sessions owner all"
 on public.workout_sessions

@@ -88,6 +88,23 @@ function db() {
   return supabase() as any;
 }
 
+function getBrowserOrigin() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.location.origin;
+}
+
+function getAuthCallbackUrl(nextPath = "/dashboard") {
+  const origin = getBrowserOrigin();
+  return origin ? `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}` : undefined;
+}
+
+function isEmailIdentifier(identifier: string) {
+  return identifier.includes("@");
+}
+
 function getFriendlyError(error: unknown, fallback: string) {
   if (error instanceof ApiRequestError) {
     return error;
@@ -142,14 +159,68 @@ async function ensureProfile() {
     id: user.id,
     email: user.email ?? "",
     full_name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null,
+    username:
+      typeof user.user_metadata?.username === "string" && user.user_metadata.username.trim()
+        ? user.user_metadata.username.trim().toLowerCase()
+        : null,
   };
 
   const { error } = await db().from("profiles").upsert(payload, { onConflict: "id" });
   if (error) {
-    throw new ApiRequestError(error.message);
+    const missingUsernameColumn =
+      error.message.includes("username") && error.message.toLowerCase().includes("column");
+
+    if (!missingUsernameColumn) {
+      throw new ApiRequestError(error.message);
+    }
+
+    const fallbackPayload = {
+      id: payload.id,
+      email: payload.email,
+      full_name: payload.full_name,
+    };
+
+    const { error: fallbackError } = await db().from("profiles").upsert(fallbackPayload, { onConflict: "id" });
+    if (fallbackError) {
+      throw new ApiRequestError(fallbackError.message);
+    }
   }
 
   return user;
+}
+
+async function resolveLoginEmail(identifier: string) {
+  const normalized = identifier.trim().toLowerCase();
+  if (!normalized) {
+    throw new ApiRequestError("Introduce tu email o nombre de usuario.");
+  }
+
+  if (isEmailIdentifier(normalized)) {
+    return normalized;
+  }
+
+  const { data, error } = await db().rpc("resolve_login_identifier", {
+    login_identifier: normalized,
+  });
+
+  if (error) {
+    if (
+      error.message.toLowerCase().includes("function") ||
+      error.message.toLowerCase().includes("resolve_login_identifier")
+    ) {
+      throw new ApiRequestError(
+        "Falta aplicar la migración de Supabase para iniciar sesión con nombre de usuario."
+      );
+    }
+
+    throw new ApiRequestError(error.message);
+  }
+
+  if (!data) {
+    throw new ApiRequestError("No existe ninguna cuenta con ese email o nombre de usuario.");
+  }
+
+  return String(data).trim().toLowerCase();
 }
 
 function mapExercise(row: {
@@ -235,8 +306,7 @@ export async function registerUser(payload: {
   password: string;
 }) {
   ensureEnv();
-  const redirectTo =
-    typeof window === "undefined" ? undefined : `${window.location.origin}/login?verified=1`;
+  const redirectTo = getAuthCallbackUrl("/dashboard");
 
   const { data, error } = await supabase().auth.signUp({
     email: payload.email,
@@ -290,8 +360,9 @@ export async function registerUser(payload: {
 
 export async function loginUser(payload: { identifier: string; password: string }) {
   ensureEnv();
+  const email = await resolveLoginEmail(payload.identifier);
   const { data, error } = await supabase().auth.signInWithPassword({
-    email: payload.identifier,
+    email,
     password: payload.password,
   });
 
@@ -310,15 +381,15 @@ export async function loginUser(payload: { identifier: string; password: string 
     token_type: data.session.token_type,
     user: {
       id: data.user.id,
-      email: data.user.email ?? payload.identifier,
+      email: data.user.email ?? email,
       username:
         typeof data.user.user_metadata?.username === "string"
           ? data.user.user_metadata.username
-          : data.user.email ?? payload.identifier,
+          : data.user.email ?? email,
       full_name:
         typeof data.user.user_metadata?.full_name === "string"
           ? data.user.user_metadata.full_name
-          : data.user.email ?? payload.identifier,
+          : data.user.email ?? email,
       is_active: true,
       created_at: data.user.created_at ?? new Date().toISOString(),
     },
@@ -334,8 +405,7 @@ export async function signOutUser() {
 
 export async function signInWithProvider(provider: "google" | "apple") {
   ensureEnv();
-  const redirectTo =
-    typeof window === "undefined" ? undefined : `${window.location.origin}/dashboard`;
+  const redirectTo = getAuthCallbackUrl("/dashboard");
 
   const { data, error } = await supabase().auth.signInWithOAuth({
     provider,
@@ -345,10 +415,120 @@ export async function signInWithProvider(provider: "google" | "apple") {
   });
 
   if (error) {
-    throw new ApiRequestError(error.message);
+    throw new ApiRequestError(
+      error.message.includes("provider is not enabled")
+        ? `${provider === "google" ? "Google" : "Apple"} no está habilitado todavía en Supabase Auth.`
+        : error.message
+    );
   }
 
   return data;
+}
+
+export async function fetchProfile() {
+  const user = await ensureProfile();
+  const { data, error } = await db()
+    .from("profiles")
+    .select("email, full_name, username, current_week, block_type")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    const missingUsernameColumn =
+      error.message.includes("username") && error.message.toLowerCase().includes("column");
+
+    if (!missingUsernameColumn) {
+      throw new ApiRequestError(error.message);
+    }
+
+    const fallback = await db()
+      .from("profiles")
+      .select("email, full_name, current_week, block_type")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (fallback.error) {
+      throw new ApiRequestError(fallback.error.message);
+    }
+
+    return {
+      email: fallback.data?.email ?? user.email ?? "",
+      full_name:
+        fallback.data?.full_name ??
+        (typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : ""),
+      username:
+        typeof user.user_metadata?.username === "string" ? user.user_metadata.username : user.email ?? "",
+      current_week: fallback.data?.current_week ?? 1,
+      block_type: fallback.data?.block_type ?? "HIP",
+    };
+  }
+
+  return {
+    email: data?.email ?? user.email ?? "",
+    full_name:
+      data?.full_name ??
+      (typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : ""),
+    username:
+      data?.username ??
+      (typeof user.user_metadata?.username === "string" ? user.user_metadata.username : user.email ?? ""),
+    current_week: data?.current_week ?? 1,
+    block_type: data?.block_type ?? "HIP",
+  };
+}
+
+export async function updateProfile(payload: { full_name: string; username: string }) {
+  const user = await getUserOrThrow();
+  const normalizedUsername = payload.username.trim().toLowerCase();
+  const fullName = payload.full_name.trim();
+
+  const { data: authData, error: authError } = await supabase().auth.updateUser({
+    data: {
+      full_name: fullName,
+      username: normalizedUsername,
+    },
+  });
+
+  if (authError) {
+    throw new ApiRequestError(authError.message);
+  }
+
+  const updatePayload = {
+    id: user.id,
+    email: authData.user?.email ?? user.email ?? "",
+    full_name: fullName,
+    username: normalizedUsername,
+  };
+
+  const { error } = await db().from("profiles").upsert(updatePayload, { onConflict: "id" });
+  if (error) {
+    const missingUsernameColumn =
+      error.message.includes("username") && error.message.toLowerCase().includes("column");
+
+    if (!missingUsernameColumn) {
+      throw new ApiRequestError(error.message);
+    }
+
+    const fallback = await db()
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: updatePayload.email,
+          full_name: fullName,
+        },
+        { onConflict: "id" }
+      );
+
+    if (fallback.error) {
+      throw new ApiRequestError(fallback.error.message);
+    }
+  }
+
+  return {
+    email: updatePayload.email,
+    full_name: fullName,
+    username: normalizedUsername,
+  };
 }
 
 export async function fetchExercises() {
@@ -560,6 +740,27 @@ export async function deleteAllRecords(_token: string) {
   }
 
   return { message: "Registros eliminados." };
+}
+
+export async function deleteOwnAccount() {
+  const { error } = await db().rpc("delete_my_account");
+  if (error) {
+    if (
+      error.message.toLowerCase().includes("function") ||
+      error.message.toLowerCase().includes("delete_my_account")
+    ) {
+      throw new ApiRequestError(
+        "Falta aplicar la migración de Supabase para borrar la cuenta completa."
+      );
+    }
+
+    throw new ApiRequestError(error.message);
+  }
+
+  return {
+    message:
+      "Tu cuenta y todos tus datos se han eliminado permanentemente. Podrás registrarte otra vez en el futuro.",
+  };
 }
 
 export async function syncStoredSession() {

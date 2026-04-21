@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 import { ApiRequestError, loginUser, registerUser, signInWithProvider } from "@/lib/api";
@@ -12,6 +12,7 @@ type AuthClientFormProps = {
 
 export function AuthClientForm({ mode }: AuthClientFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,14 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
     ],
     [passwordValue]
   );
+  const externalNotice =
+    mode === "login"
+      ? searchParams.get("deleted") === "1"
+        ? "Tu cuenta se ha eliminado correctamente. Si quieres, puedes registrarte otra vez."
+        : searchParams.get("verified") === "1"
+          ? "Correo confirmado. Ya puedes entrar con tu cuenta."
+          : ""
+      : "";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,7 +46,8 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
     setFieldErrors({});
     setLoading(true);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const identifier = String(formData.get("identifier") ?? "").trim();
     const password = String(formData.get("password") ?? "").trim();
     const fullName = String(formData.get("fullName") ?? "").trim();
@@ -56,7 +66,7 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
           setSuccessMessage(
             "Cuenta creada. Revisa tu email y confirma la dirección antes de iniciar sesión."
           );
-          event.currentTarget.reset();
+          form.reset();
           setPasswordValue("");
           return;
         }
@@ -110,9 +120,10 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
         <h1>{mode === "login" ? "Iniciar sesion" : "Crear cuenta"}</h1>
         <p>
           {mode === "login"
-            ? "Accede con tu email y tu contraseña para seguir registrando sesiones y progreso."
+            ? "Accede con tu email o nombre de usuario y tu contraseña para seguir registrando sesiones y progreso."
             : "Crea tu cuenta para guardar rutinas, entrenamientos e historial. Recibirás un email de verificación antes de poder entrar."}
         </p>
+        {externalNotice ? <p className="feedback success">{externalNotice}</p> : null}
         <div className="oauth-stack">
           <button
             className="button secondary oauth-button"
@@ -178,15 +189,15 @@ export function AuthClientForm({ mode }: AuthClientFormProps) {
             </>
           ) : (
             <label className="field" htmlFor="identifier">
-              <span>Email</span>
+              <span>Email o nombre de usuario</span>
               <input
                 className={fieldErrors.identifier ? "input-invalid" : ""}
                 id="identifier"
                 name="identifier"
-                placeholder="tu@email.com"
-                type="email"
+                placeholder="tu@email.com o tu_usuario"
+                type="text"
               />
-              <small className="field-hint">Supabase Auth inicia sesión con email verificado.</small>
+              <small className="field-hint">Puedes entrar con el email o con tu nombre de usuario único.</small>
               {fieldErrors.identifier ? <p className="field-feedback">{fieldErrors.identifier}</p> : null}
             </label>
           )}

@@ -135,6 +135,11 @@ main {
   background: rgba(240, 231, 216, 0.72);
   color: var(--accent-strong);
   font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.user-chip:hover {
+  border-color: var(--line);
 }
 
 .hero {
@@ -192,6 +197,12 @@ main {
   box-shadow: 0 12px 30px var(--shadow);
 }
 
+.button.danger {
+  background: #8f1d14;
+  color: #fff7f6;
+  box-shadow: 0 12px 30px rgba(143, 29, 20, 0.18);
+}
+
 .button.secondary {
   border-color: var(--line);
   background: rgba(255, 253, 250, 0.75);
@@ -241,19 +252,26 @@ main {
 
 .pill {
   display: inline-flex;
-  width: fit-content;
+  align-self: start;
+  width: auto;
+  max-width: max-content;
+  min-height: 32px;
   padding: 6px 10px;
   border-radius: 999px;
   background: var(--surface-strong);
   color: var(--accent-strong);
   font-size: 0.85rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .auth-shell {
-  min-height: 100vh;
+  width: min(100%, 860px);
+  margin: 0 auto;
+  min-height: calc(100vh - 180px);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 24px 0;
 }
 
 .auth-card {
@@ -991,6 +1009,13 @@ main {
   display: grid;
   gap: 8px;
   align-content: start;
+}
+
+.danger-box {
+  padding: 12px;
+  border: 1px solid rgba(143, 29, 20, 0.18);
+  border-radius: 18px;
+  background: rgba(251, 231, 228, 0.42);
 }
 
 .legal-page {

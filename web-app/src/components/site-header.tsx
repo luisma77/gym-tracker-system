@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { clearAuthSession, getStoredUser } from "@/lib/auth-storage";
+import { clearAuthSession, getAuthStorageEventName, getStoredUser } from "@/lib/auth-storage";
 import { signOutUser } from "@/lib/api";
 
 type StoredUser = {
   email: string;
   full_name: string;
+  username?: string;
 };
 
 export function SiteHeader() {
@@ -19,7 +20,18 @@ export function SiteHeader() {
   const isAuthed = Boolean(user);
 
   useEffect(() => {
-    setUser(getStoredUser<StoredUser>());
+    const refreshUser = () => setUser(getStoredUser<StoredUser>());
+    refreshUser();
+
+    window.addEventListener("storage", refreshUser);
+    window.addEventListener("focus", refreshUser);
+    window.addEventListener(getAuthStorageEventName(), refreshUser);
+
+    return () => {
+      window.removeEventListener("storage", refreshUser);
+      window.removeEventListener("focus", refreshUser);
+      window.removeEventListener(getAuthStorageEventName(), refreshUser);
+    };
   }, [pathname]);
 
   async function handleLogout() {
@@ -52,9 +64,6 @@ export function SiteHeader() {
               <Link className={pathname === "/dashboard" ? "nav-link active" : "nav-link"} href="/dashboard">
                 Dashboard
               </Link>
-              <Link className={pathname === "/settings" ? "nav-link active" : "nav-link"} href="/settings">
-                Ajustes
-              </Link>
             </>
           ) : null}
           <Link className={pathname === "/privacy" ? "nav-link active" : "nav-link"} href="/privacy">
@@ -65,7 +74,9 @@ export function SiteHeader() {
         <div className="site-header-actions">
           {isAuthed ? (
             <>
-              <span className="user-chip">{user?.full_name ?? user?.email}</span>
+              <Link className="user-chip" href="/settings">
+                {user?.full_name ?? user?.username ?? user?.email}
+              </Link>
               <button className="button secondary" onClick={handleLogout} type="button">
                 Cerrar sesión
               </button>
