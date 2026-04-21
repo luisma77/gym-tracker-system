@@ -1,0 +1,67 @@
+PROMPT DE CONTEXTO VIVO DEL PROYECTO
+Gym Tracker System | Luis Labrandero
+
+REGLA CRITICA DE WORKFLOW
+
+La fuente de verdad humana y operativa de este proyecto NO es este archivo.
+La fuente principal vive en:
+
+- `C:\proyectos\obsidian-cerebo\00_INICIO\LEER_PRIMERO.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\00_MEMORIA_PROYECTO.md`
+
+Antes de cualquier cambio significativo se debe:
+
+1. Leer `LEER_PRIMERO.md`
+2. Leer `10_PROYECTOS/GYM-TRACKER/00_MEMORIA_PROYECTO.md`
+3. Usar esa bóveda como memoria principal del proyecto
+4. Actualizar la bóveda al terminar
+
+Este archivo solo existe como recordatorio puente dentro del repo.
+
+
+ESTADO REAL ACTUAL
+
+- web principal en `web-app/`
+- backend real en `Supabase`
+- despliegue en `Vercel`
+- login por email o username
+- verificación de correo
+- dashboard con analítica avanzada
+- exportes PDF y Excel de rendimiento
+
+
+DOCUMENTOS CLAVE EN LA BOVEDA
+
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\00_MEMORIA_PROYECTO.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\01_ESTADO_ACTUAL.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\02_PROBLEMAS_RESUELTOS.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\03_SUPABASE_AUTH.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\04_ANALITICA_E_INFORMES.md`
+- `C:\proyectos\obsidian-cerebo\10_PROYECTOS\GYM-TRACKER\05_PENDIENTES.md`
+
+
+ESTRUCTURA TECNICA MINIMA
+
+- `excel-engine/` mantiene la lógica del Excel
+- `web-app/` es la app activa
+- `Supabase` gestiona auth y datos
+- `Vercel` sirve producción
+
+
+ULTIMO PROBLEMA DETECTADO
+
+El workflow de documentación se desvió: se escribió primero en `docs/` del repo en lugar de escribir primero en la bóveda de Obsidian.
+
+
+COMO SE HA CORREGIDO
+
+- se han creado notas específicas del proyecto dentro de `obsidian-cerebo`
+- este archivo se ha simplificado para redirigir explícitamente a la bóveda
+- se elimina el contexto técnico obsoleto que describía una arquitectura antigua
+
+
+SUGERENCIAS PARA LA PROXIMA VERSION
+
+- tratar la bóveda de Obsidian como primer destino de documentación
+- usar el repo solo como espejo técnico secundario
+- revisar periódicamente que no vuelvan a divergir repo y bóveda
