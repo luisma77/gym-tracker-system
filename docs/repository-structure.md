@@ -42,6 +42,9 @@ Responsabilidades actuales:
 - registro de entrenamiento
 - panel de progreso
 - perfil y ajustes
+- exporte del Excel base
+- exporte de informes PDF y Excel del usuario
+- métricas de favorito, récords, adherencia y evolución
 - páginas legales
 - conexión directa con Supabase Auth y Supabase Postgres
 
@@ -52,3 +55,11 @@ Esquemas y contratos reutilizables entre módulos.
 ## Principio de diseño
 
 Cada carpeta debe representar una responsabilidad clara del sistema. La estructura evita mezclar documentación, motor Excel y futura aplicación web en una sola capa.
+
+## Notas actuales de documentación
+
+- `docs/system-overview.md` resume arquitectura y capacidades activas
+- `docs/managed-deployment.md` recoge requisitos de Supabase y Vercel para producción
+- la lógica analítica viva del dashboard y de los informes se concentra en:
+  - `web-app/src/lib/performance-report.ts`
+  - `web-app/src/lib/report-export.ts`

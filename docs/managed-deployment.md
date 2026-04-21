@@ -38,7 +38,6 @@ Si Vercel construye desde la raíz del repositorio, el despliegue por Git fallar
   - la variante `vercel.app` que uses en producción o preview
 - proveedor `Email` activo
 - confirmación de correo activa
-- `Google` y `Apple` configurados si se quieren ofrecer botones OAuth funcionales
 
 ## Plantillas y entregabilidad del email
 
@@ -73,4 +72,17 @@ La app usa ahora:
 
 - `/auth/callback`
 
-Ese callback evita que el usuario termine en una URL fea o vacía al confirmar el correo o volver desde Google / Apple.
+Ese callback evita que el usuario termine en una URL fea o vacía al confirmar el correo.
+
+## Estado actual del acceso
+
+- la UI pública ya no muestra botones de Google ni Apple
+- el flujo principal queda centrado en `email o nombre de usuario + contraseña`
+- el login por nombre de usuario usa la migración de `profiles` o un fallback directo contra la tabla de perfiles
+
+## Exportes y analítica ya desplegados
+
+- descarga del Excel base del sistema
+- informe Excel de rendimiento con hojas de resumen, sesiones, series, medidas, progreso, favorito, récords, músculos, conclusiones y datos para gráficas
+- informe PDF de rendimiento con nombre del atleta, conclusiones automáticas, récords y tendencias
+- dashboard con métricas de ejercicio favorito, mayor progreso, racha de semanas, grupo estrella y grupo rezagado

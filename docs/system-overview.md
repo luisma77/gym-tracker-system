@@ -19,13 +19,14 @@ Gym Tracker System convierte la lógica del Excel PPL en una aplicación web usa
 - dashboard de entrenamiento
 - registro de series y medidas
 - perfil y ajustes
+- informes PDF y Excel de rendimiento
+- analítica avanzada con métricas de progreso, racha y récords
 - páginas legales
 
 ### Supabase Auth
 
 - email y contraseña
 - verificación de correo
-- OAuth con Google y Apple cuando estén configurados en el panel
 - recuperación y cambio de contraseña
 
 ### Supabase Postgres
@@ -46,15 +47,17 @@ Gym Tracker System convierte la lógica del Excel PPL en una aplicación web usa
 ## Capacidades actuales
 
 - crear cuenta con verificación por email
-- iniciar sesión con email
-- preparar inicio de sesión por usuario único
-- preparar login social con Google y Apple
+- iniciar sesión con email o nombre de usuario
 - registrar sesiones completas con múltiples ejercicios y series
 - guardar medidas corporales
-- mostrar gráficas base de peso, volumen y RIR
+- mostrar gráficas de peso, volumen, RIR, frecuencia y e1RM del ejercicio con más progreso
+- detectar ejercicio favorito, grupo estrella, grupo rezagado y racha de adherencia
+- exportar un Excel base del sistema
+- exportar informes de rendimiento en PDF y Excel con narrativa automática
+- destacar récords como serie más pesada, mejor e1RM y sesión con más volumen
 
 ## Próxima mejora técnica ya prevista
 
 - terminar de aplicar la migración de perfiles para login por usuario y borrado total de cuenta
-- pulir más visualmente el flujo de auth
-- ampliar analítica con métricas de rendimiento por ejercicio y por grupo muscular
+- incrustar gráficas nativas dentro del archivo Excel generado
+- documentar mejor el modelo de métricas y sus reglas de cálculo
