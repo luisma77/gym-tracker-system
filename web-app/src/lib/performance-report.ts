@@ -39,6 +39,21 @@ export type FavoriteExercise = {
   reason: string;
 };
 
+export type MuscleInsight = {
+  muscleGroup: string;
+  totalSets: number;
+  totalVolumeKg: number;
+  reason: string;
+};
+
+export type PersonalRecord = {
+  label: string;
+  exerciseName: string;
+  value: number;
+  unit: string;
+  date: string;
+};
+
 export type PerformanceSnapshot = {
   totalSessions: number;
   totalSets: number;
@@ -47,8 +62,20 @@ export type PerformanceSnapshot = {
   averageSessionRir: number;
   latestWeightKg: number | null;
   weightDeltaKg: number | null;
+  adherenceStreakWeeks: number;
   bestImprovement: ExerciseImprovement | null;
   favoriteExercise: FavoriteExercise | null;
+  starMuscle: MuscleInsight | null;
+  laggingMuscle: MuscleInsight | null;
+  personalRecords: {
+    heaviestSet: PersonalRecord | null;
+    bestEstimatedRm: PersonalRecord | null;
+    highestVolumeSession: {
+      sessionTitle: string;
+      volumeKg: number;
+      date: string;
+    } | null;
+  };
   topImprovements: ExerciseImprovement[];
   weightTrend: TrendPoint[];
   sessionVolumeTrend: TrendPoint[];
@@ -271,6 +298,111 @@ function buildFavoriteExercise(
   } satisfies FavoriteExercise;
 }
 
+function buildAdherenceStreakWeeks(sessions: WorkoutSession[]) {
+  const uniqueWeeks = [...new Set(sessions.map((session) => session.week_number))].sort((a, b) => b - a);
+  if (uniqueWeeks.length === 0) {
+    return 0;
+  }
+
+  let streak = 1;
+  for (let index = 1; index < uniqueWeeks.length; index += 1) {
+    if (uniqueWeeks[index - 1] - uniqueWeeks[index] === 1) {
+      streak += 1;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function buildMuscleInsights(sessions: WorkoutSession[]) {
+  const totals = new Map<string, { totalSets: number; totalVolumeKg: number }>();
+
+  sessions.forEach((session) => {
+    session.sets.forEach((setItem) => {
+      const current = totals.get(setItem.muscle_group) ?? { totalSets: 0, totalVolumeKg: 0 };
+      current.totalSets += 1;
+      current.totalVolumeKg += setItem.reps * setItem.weight_kg;
+      totals.set(setItem.muscle_group, current);
+    });
+  });
+
+  const ordered = [...totals.entries()]
+    .map(([muscleGroup, data]) => ({
+      muscleGroup,
+      totalSets: data.totalSets,
+      totalVolumeKg: data.totalVolumeKg,
+    }))
+    .sort((left, right) => right.totalSets - left.totalSets || right.totalVolumeKg - left.totalVolumeKg);
+
+  const star = ordered[0]
+    ? {
+        ...ordered[0],
+        reason: `Es tu grupo estrella porque acumula ${ordered[0].totalSets} series y ${ordered[0].totalVolumeKg.toFixed(1)} kg de volumen total.`,
+      }
+    : null;
+
+  const laggingRaw = [...ordered].sort((left, right) => left.totalSets - right.totalSets || left.totalVolumeKg - right.totalVolumeKg)[0];
+  const lagging = laggingRaw
+    ? {
+        ...laggingRaw,
+        reason: `Es el grupo más rezagado porque solo lleva ${laggingRaw.totalSets} series y ${laggingRaw.totalVolumeKg.toFixed(1)} kg acumulados.`,
+      }
+    : null;
+
+  return {
+    starMuscle: star satisfies MuscleInsight | null,
+    laggingMuscle: lagging satisfies MuscleInsight | null,
+  };
+}
+
+function buildPersonalRecords(sessions: WorkoutSession[]) {
+  let heaviestSet: PersonalRecord | null = null;
+  let bestEstimatedRm: PersonalRecord | null = null;
+  let highestVolumeSession: { sessionTitle: string; volumeKg: number; date: string } | null = null;
+
+  sessions.forEach((session) => {
+    const sessionVolume = getSessionVolume(session);
+    if (!highestVolumeSession || sessionVolume > highestVolumeSession.volumeKg) {
+      highestVolumeSession = {
+        sessionTitle: session.title,
+        volumeKg: sessionVolume,
+        date: session.created_at,
+      };
+    }
+
+    session.sets.forEach((setItem) => {
+      if (!heaviestSet || setItem.weight_kg > heaviestSet.value) {
+        heaviestSet = {
+          label: "Serie más pesada",
+          exerciseName: setItem.exercise_name,
+          value: setItem.weight_kg,
+          unit: "kg",
+          date: session.created_at,
+        };
+      }
+
+      const estimated = estimateRm(setItem.weight_kg, setItem.reps, setItem.rir);
+      if (!bestEstimatedRm || estimated > bestEstimatedRm.value) {
+        bestEstimatedRm = {
+          label: "Mejor e1RM",
+          exerciseName: setItem.exercise_name,
+          value: estimated,
+          unit: "kg",
+          date: session.created_at,
+        };
+      }
+    });
+  });
+
+  return {
+    heaviestSet,
+    bestEstimatedRm,
+    highestVolumeSession,
+  };
+}
+
 export function buildPerformanceSnapshot(
   sessions: WorkoutSession[],
   measurements: BodyMeasurement[]
@@ -351,6 +483,9 @@ export function buildPerformanceSnapshot(
   const bestImprovement = topImprovements[0] ?? null;
   const improvementsByExerciseId = new Map(topImprovements.map((item) => [item.exerciseId, item]));
   const favoriteExercise = buildFavoriteExercise(sessions, improvementsByExerciseId);
+  const adherenceStreakWeeks = buildAdherenceStreakWeeks(sessions);
+  const { starMuscle, laggingMuscle } = buildMuscleInsights(sessions);
+  const personalRecords = buildPersonalRecords(sessions);
 
   return {
     totalSessions: sessions.length,
@@ -360,8 +495,12 @@ export function buildPerformanceSnapshot(
     averageSessionRir,
     latestWeightKg,
     weightDeltaKg,
+    adherenceStreakWeeks,
     bestImprovement,
     favoriteExercise,
+    starMuscle,
+    laggingMuscle,
+    personalRecords,
     topImprovements: topImprovements.slice(0, 6),
     weightTrend,
     sessionVolumeTrend,

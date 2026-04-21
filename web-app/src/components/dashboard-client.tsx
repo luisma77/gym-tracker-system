@@ -1142,6 +1142,10 @@ export function DashboardClient() {
                     : `${performanceSnapshot.weightDeltaKg > 0 ? "+" : ""}${performanceSnapshot.weightDeltaKg.toFixed(1)} kg`}
                 </span>
               </div>
+              <div>
+                <strong>Racha activa</strong>
+                <span>{performanceSnapshot.adherenceStreakWeeks} semanas</span>
+              </div>
             </div>
           </article>
 
@@ -1182,6 +1186,54 @@ export function DashboardClient() {
             ) : (
               <p>Todavía no hay suficientes datos para detectar tu ejercicio favorito.</p>
             )}
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Músculos</span>
+            <h2>Tu grupo estrella y tu grupo rezagado</h2>
+            <div className="summary-list">
+              <div>
+                <strong>Grupo estrella</strong>
+                <span>{performanceSnapshot.starMuscle?.muscleGroup ?? "--"}</span>
+                <small>{performanceSnapshot.starMuscle?.reason ?? "Sin datos suficientes."}</small>
+              </div>
+              <div>
+                <strong>Grupo rezagado</strong>
+                <span>{performanceSnapshot.laggingMuscle?.muscleGroup ?? "--"}</span>
+                <small>{performanceSnapshot.laggingMuscle?.reason ?? "Sin datos suficientes."}</small>
+              </div>
+            </div>
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Récords</span>
+            <h2>Marcas destacadas</h2>
+            <div className="summary-list">
+              <div>
+                <strong>Serie más pesada</strong>
+                <span>
+                  {performanceSnapshot.personalRecords.heaviestSet
+                    ? `${performanceSnapshot.personalRecords.heaviestSet.exerciseName} · ${performanceSnapshot.personalRecords.heaviestSet.value.toFixed(1)} kg`
+                    : "--"}
+                </span>
+              </div>
+              <div>
+                <strong>Mejor e1RM</strong>
+                <span>
+                  {performanceSnapshot.personalRecords.bestEstimatedRm
+                    ? `${performanceSnapshot.personalRecords.bestEstimatedRm.exerciseName} · ${performanceSnapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} kg`
+                    : "--"}
+                </span>
+              </div>
+              <div>
+                <strong>Sesión con más volumen</strong>
+                <span>
+                  {performanceSnapshot.personalRecords.highestVolumeSession
+                    ? `${performanceSnapshot.personalRecords.highestVolumeSession.sessionTitle} · ${performanceSnapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
+                    : "--"}
+                </span>
+              </div>
+            </div>
           </article>
 
           <article className="card stack">

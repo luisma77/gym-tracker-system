@@ -80,6 +80,37 @@ function drawLineChart(
   return chartBottom + 12;
 }
 
+function buildReportConclusions(snapshot: ReturnType<typeof buildPerformanceSnapshot>) {
+  const conclusions = [
+    `Has registrado ${snapshot.totalSessions} sesiones y ${snapshot.totalSets} series en total.`,
+    `Tu volumen acumulado es de ${snapshot.totalVolumeKg.toFixed(1)} kg, con un RIR medio de ${snapshot.averageSessionRir.toFixed(2)}.`,
+  ];
+
+  if (snapshot.bestImprovement) {
+    conclusions.push(
+      `Tu mayor progreso está en ${snapshot.bestImprovement.exerciseName}, con una mejora estimada del ${snapshot.bestImprovement.deltaPercent.toFixed(1)}%.`
+    );
+  }
+
+  if (snapshot.favoriteExercise) {
+    conclusions.push(snapshot.favoriteExercise.reason);
+  }
+
+  if (snapshot.starMuscle) {
+    conclusions.push(snapshot.starMuscle.reason);
+  }
+
+  if (snapshot.laggingMuscle && snapshot.laggingMuscle.muscleGroup !== snapshot.starMuscle?.muscleGroup) {
+    conclusions.push(snapshot.laggingMuscle.reason);
+  }
+
+  if (snapshot.adherenceStreakWeeks > 0) {
+    conclusions.push(`Llevas una racha de ${snapshot.adherenceStreakWeeks} semanas consecutivas con entrenamiento registrado.`);
+  }
+
+  return conclusions;
+}
+
 export function downloadBaseExcel() {
   const anchor = document.createElement("a");
   anchor.href = "/downloads/Gym_Tracker.xlsx";
@@ -121,6 +152,18 @@ export function downloadPerformanceWorkbook(
     {
       indicador: "Motivo del favorito",
       valor: snapshot.favoriteExercise?.reason ?? "Todavía no hay suficientes registros para detectarlo.",
+    },
+    {
+      indicador: "Grupo estrella",
+      valor: snapshot.starMuscle?.muscleGroup ?? "Sin datos suficientes",
+    },
+    {
+      indicador: "Grupo rezagado",
+      valor: snapshot.laggingMuscle?.muscleGroup ?? "Sin datos suficientes",
+    },
+    {
+      indicador: "Racha de semanas",
+      valor: snapshot.adherenceStreakWeeks,
     },
   ];
 
@@ -198,6 +241,53 @@ export function downloadPerformanceWorkbook(
         },
       ];
 
+  const recordsRows = [
+    {
+      record: "Serie más pesada",
+      ejercicio: snapshot.personalRecords.heaviestSet?.exerciseName ?? "Sin datos",
+      valor: snapshot.personalRecords.heaviestSet ? `${snapshot.personalRecords.heaviestSet.value.toFixed(1)} ${snapshot.personalRecords.heaviestSet.unit}` : "-",
+      fecha: snapshot.personalRecords.heaviestSet ? formatReportDate(snapshot.personalRecords.heaviestSet.date) : "-",
+    },
+    {
+      record: "Mejor e1RM",
+      ejercicio: snapshot.personalRecords.bestEstimatedRm?.exerciseName ?? "Sin datos",
+      valor: snapshot.personalRecords.bestEstimatedRm ? `${snapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} ${snapshot.personalRecords.bestEstimatedRm.unit}` : "-",
+      fecha: snapshot.personalRecords.bestEstimatedRm ? formatReportDate(snapshot.personalRecords.bestEstimatedRm.date) : "-",
+    },
+    {
+      record: "Sesión con más volumen",
+      ejercicio: snapshot.personalRecords.highestVolumeSession?.sessionTitle ?? "Sin datos",
+      valor: snapshot.personalRecords.highestVolumeSession
+        ? `${snapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
+        : "-",
+      fecha: snapshot.personalRecords.highestVolumeSession
+        ? formatReportDate(snapshot.personalRecords.highestVolumeSession.date)
+        : "-",
+    },
+  ];
+
+  const muscleRows = [
+    {
+      tipo: "Grupo estrella",
+      grupo: snapshot.starMuscle?.muscleGroup ?? "Sin datos",
+      series: snapshot.starMuscle?.totalSets ?? 0,
+      volumen_kg: snapshot.starMuscle ? Number(snapshot.starMuscle.totalVolumeKg.toFixed(1)) : 0,
+      comentario: snapshot.starMuscle?.reason ?? "",
+    },
+    {
+      tipo: "Grupo rezagado",
+      grupo: snapshot.laggingMuscle?.muscleGroup ?? "Sin datos",
+      series: snapshot.laggingMuscle?.totalSets ?? 0,
+      volumen_kg: snapshot.laggingMuscle ? Number(snapshot.laggingMuscle.totalVolumeKg.toFixed(1)) : 0,
+      comentario: snapshot.laggingMuscle?.reason ?? "",
+    },
+  ];
+
+  const conclusionRows = buildReportConclusions(snapshot).map((texto, index) => ({
+    orden: index + 1,
+    conclusion: texto,
+  }));
+
   const trendRows = [
     ...snapshot.weightTrend.map((item) => ({ serie: "Peso corporal", fecha: item.label, valor: item.value })),
     ...snapshot.sessionVolumeTrend.map((item) => ({ serie: "Volumen por sesión", fecha: item.label, valor: item.value })),
@@ -255,6 +345,9 @@ export function downloadPerformanceWorkbook(
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(measurementRows), "Medidas");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(progressionRows), "Progresion");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(favoriteRows), "Favorito");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(recordsRows), "Records");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(muscleRows), "Musculos");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(conclusionRows), "Conclusiones");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(trendRows), "Tendencias");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(chartReadyRows), "Datos_graficas");
 
@@ -295,8 +388,11 @@ export function downloadPerformancePdf(
     { maxWidth: 180 }
   );
 
+  doc.setFontSize(11);
+  doc.text(`Atleta: ${athleteName}`, 14, 52);
+
   autoTable(doc, {
-    startY: 54,
+    startY: 58,
     theme: "grid",
     styles: { fontSize: 10, cellPadding: 2.6, textColor: [40, 35, 28] },
     headStyles: { fillColor: [15, 118, 110] },
@@ -318,6 +414,9 @@ export function downloadPerformancePdf(
           ? `${snapshot.favoriteExercise.exerciseName} · ${snapshot.favoriteExercise.reason}`
           : "Sin datos suficientes",
       ],
+      ["Racha activa", `${snapshot.adherenceStreakWeeks} semanas`],
+      ["Grupo estrella", snapshot.starMuscle?.reason ?? "Sin datos suficientes"],
+      ["Grupo rezagado", snapshot.laggingMuscle?.reason ?? "Sin datos suficientes"],
     ],
   });
 
@@ -354,6 +453,52 @@ export function downloadPerformancePdf(
           `${item.deltaPercent.toFixed(1)}%`,
         ])
       : [["-", "Sin datos suficientes", "-", "-", "-", "-"]],
+  });
+
+  doc.addPage();
+  autoTable(doc, {
+    startY: 18,
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 2.2 },
+    headStyles: { fillColor: [15, 118, 110] },
+    head: [["Conclusiones automáticas"]],
+    body: buildReportConclusions(snapshot).map((item) => [item]),
+  });
+
+  autoTable(doc, {
+    startY: ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 18) + 8,
+    theme: "striped",
+    styles: { fontSize: 8.8, cellPadding: 2 },
+    headStyles: { fillColor: [32, 86, 91] },
+    head: [["Récord", "Ejercicio/Sesión", "Valor", "Fecha"]],
+    body: [
+      [
+        "Serie más pesada",
+        snapshot.personalRecords.heaviestSet?.exerciseName ?? "-",
+        snapshot.personalRecords.heaviestSet
+          ? `${snapshot.personalRecords.heaviestSet.value.toFixed(1)} ${snapshot.personalRecords.heaviestSet.unit}`
+          : "-",
+        snapshot.personalRecords.heaviestSet ? formatReportDate(snapshot.personalRecords.heaviestSet.date) : "-",
+      ],
+      [
+        "Mejor e1RM",
+        snapshot.personalRecords.bestEstimatedRm?.exerciseName ?? "-",
+        snapshot.personalRecords.bestEstimatedRm
+          ? `${snapshot.personalRecords.bestEstimatedRm.value.toFixed(1)} ${snapshot.personalRecords.bestEstimatedRm.unit}`
+          : "-",
+        snapshot.personalRecords.bestEstimatedRm ? formatReportDate(snapshot.personalRecords.bestEstimatedRm.date) : "-",
+      ],
+      [
+        "Sesión con más volumen",
+        snapshot.personalRecords.highestVolumeSession?.sessionTitle ?? "-",
+        snapshot.personalRecords.highestVolumeSession
+          ? `${snapshot.personalRecords.highestVolumeSession.volumeKg.toFixed(1)} kg`
+          : "-",
+        snapshot.personalRecords.highestVolumeSession
+          ? formatReportDate(snapshot.personalRecords.highestVolumeSession.date)
+          : "-",
+      ],
+    ],
   });
 
   doc.addPage();
