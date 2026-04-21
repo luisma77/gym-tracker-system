@@ -18,6 +18,13 @@ import {
 import { getAuthToken, getStoredUser } from "@/lib/auth-storage";
 import { dayTemplates } from "@/lib/day-templates";
 import { seedExercises, type SeedExercise } from "@/lib/exercise-seed";
+import {
+  ACTIVITY_OPTIONS,
+  GOAL_OPTIONS,
+  getHarrisBenedictResult,
+  initialHarrisDraft,
+  type HarrisDraft,
+} from "@/lib/harris-benedict";
 import { buildPerformanceSnapshot } from "@/lib/performance-report";
 import { downloadBaseExcel, downloadPerformancePdf, downloadPerformanceWorkbook } from "@/lib/report-export";
 import { getSetGridTemplate } from "@/lib/session-layout";
@@ -618,6 +625,7 @@ export function DashboardClient() {
     rows: [],
   });
   const [measurementDraft, setMeasurementDraft] = useState<MeasurementDraft>(initialMeasurementDraft);
+  const [harrisDraft, setHarrisDraft] = useState<HarrisDraft>(initialHarrisDraft);
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -705,6 +713,9 @@ export function DashboardClient() {
     () => buildPerformanceSnapshot(sessions, measurements),
     [measurements, sessions]
   );
+  const latestMeasurement = measurements[0] ?? null;
+  const latestKnownWeight = latestMeasurement?.weight_kg ?? null;
+  const harrisResult = useMemo(() => getHarrisBenedictResult(harrisDraft, latestKnownWeight), [harrisDraft, latestKnownWeight]);
   const measurementTrend = performanceSnapshot.weightTrend;
   const volumeTrend = performanceSnapshot.sessionVolumeTrend;
   const rirTrend = performanceSnapshot.sessionRirTrend;
@@ -1690,6 +1701,144 @@ export function DashboardClient() {
             <button className="button primary" disabled={savingMeasurement} onClick={handleCreateMeasurement} type="button">
               {savingMeasurement ? "Guardando..." : "Guardar medidas"}
             </button>
+          </article>
+
+          <article className="card stack">
+            <span className="pill">Calculadora</span>
+            <h2>Harris-Benedict completa</h2>
+            <p>
+              Estima tu gasto basal, calorias objetivo, macros, IMC y rango de peso saludable con una referencia rapida
+              basada en tu actividad actual.
+            </p>
+            <div className="grid triple metrics-grid">
+              <label className="field">
+                <span>Sexo biologico</span>
+                <select
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, sex: event.target.value as HarrisDraft["sex"] })}
+                  value={harrisDraft.sex}
+                >
+                  <option value="male">Hombre</option>
+                  <option value="female">Mujer</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Edad</span>
+                <input
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, age: event.target.value })}
+                  type="number"
+                  value={harrisDraft.age}
+                />
+              </label>
+              <label className="field">
+                <span>Altura cm</span>
+                <input
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, heightCm: event.target.value })}
+                  type="number"
+                  value={harrisDraft.heightCm}
+                />
+              </label>
+              <label className="field">
+                <span>Peso kg</span>
+                <input
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, weightKg: event.target.value })}
+                  placeholder={latestKnownWeight ? `${formatDecimal(latestKnownWeight)} kg de tu ultimo registro` : "Peso actual"}
+                  type="number"
+                  value={harrisDraft.weightKg}
+                />
+                <small className="field-hint">
+                  {latestKnownWeight
+                    ? `Si lo dejas vacio, usamos ${formatDecimal(latestKnownWeight)} kg de tu ultima medicion.`
+                    : "Introduce tu peso actual para calcular calorias y macros."}
+                </small>
+              </label>
+              <label className="field">
+                <span>Nivel de actividad</span>
+                <select
+                  onChange={(event) => setHarrisDraft({ ...harrisDraft, activity: event.target.value as HarrisDraft["activity"] })}
+                  value={harrisDraft.activity}
+                >
+                  {ACTIVITY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Objetivo</span>
+                <select onChange={(event) => setHarrisDraft({ ...harrisDraft, goal: event.target.value as HarrisDraft["goal"] })} value={harrisDraft.goal}>
+                  {GOAL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {harrisResult ? (
+              <>
+                <div className="calculator-results-grid">
+                  <div className="calculator-metric-card">
+                    <span>TMB</span>
+                    <strong>{Math.round(harrisResult.bmr)} kcal</strong>
+                    <small>Tu gasto basal en reposo total.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>GET</span>
+                    <strong>{Math.round(harrisResult.tdee)} kcal</strong>
+                    <small>Gasto diario segun tu actividad.</small>
+                  </div>
+                  <div className="calculator-metric-card accent">
+                    <span>Objetivo diario</span>
+                    <strong>{Math.round(harrisResult.targetCalories)} kcal</strong>
+                    <small>{harrisResult.goal.label} con ajuste automatico.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>IMC</span>
+                    <strong>{formatDecimal(harrisResult.bmi)}</strong>
+                    <small>
+                      Rango saludable estimado: {formatDecimal(harrisResult.minHealthyWeight)} a{" "}
+                      {formatDecimal(harrisResult.maxHealthyWeight)} kg.
+                    </small>
+                  </div>
+                </div>
+                <div className="calculator-results-grid">
+                  <div className="calculator-metric-card">
+                    <span>Proteina</span>
+                    <strong>{Math.round(harrisResult.proteinGrams)} g</strong>
+                    <small>Base diaria para sostener masa muscular.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Grasas</span>
+                    <strong>{Math.round(harrisResult.fatGrams)} g</strong>
+                    <small>Minimo recomendado para hormonas y salud.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Carbohidratos</span>
+                    <strong>{Math.round(harrisResult.carbGrams)} g</strong>
+                    <small>Combustible disponible tras fijar proteina y grasa.</small>
+                  </div>
+                  <div className="calculator-metric-card">
+                    <span>Perfil</span>
+                    <strong>
+                      {harrisResult.age} años · {Math.round(harrisResult.weightKg)} kg
+                    </strong>
+                    <small>
+                      {Math.round(harrisResult.heightCm)} cm · factor {harrisResult.activity.factor.toFixed(3)}.
+                    </small>
+                  </div>
+                </div>
+                <p className="calculator-note">
+                  Referencia orientativa: usa estas calorias como punto de partida y compáralas con tu evolución real de
+                  peso, rendimiento, hambre y recuperación durante 2-3 semanas.
+                </p>
+              </>
+            ) : (
+              <p className="calculator-note">
+                Completa edad, altura y peso para ver el cálculo completo de Harris-Benedict con gasto basal, macros e
+                IMC.
+              </p>
+            )}
           </article>
 
           <article className="card stack">

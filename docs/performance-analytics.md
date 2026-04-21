@@ -64,6 +64,26 @@ Se destacan:
 - tarjeta de ejercicio favorito
 - tarjeta de grupo estrella y grupo rezagado
 - tarjeta de récords
+- calculadora Harris-Benedict en la pestaña `Medidas`
+
+## Calculadora Harris-Benedict
+
+Se añadió una calculadora integrada para ofrecer al usuario una lectura inmediata de composición y requerimientos energéticos.
+
+Muestra:
+
+- TMB o gasto basal
+- GET o gasto energético total
+- calorías objetivo según mantenimiento, definición o volumen
+- IMC
+- rango de peso saludable estimado
+- distribución diaria estimada de proteína, grasas y carbohidratos
+
+Detalles de implementación:
+
+- el cálculo vive en `src/lib/harris-benedict.ts`
+- el dashboard reutiliza el último peso corporal guardado cuando el usuario deja el campo de peso vacío
+- hay test automatizado en `tests/harris-benedict.test.ts`
 
 ## Exportes actuales
 

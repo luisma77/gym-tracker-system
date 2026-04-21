@@ -321,7 +321,8 @@ main {
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.field select {
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -550,6 +551,43 @@ main {
 
 .metrics-grid {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.calculator-results-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.calculator-metric-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.calculator-metric-card span,
+.calculator-metric-card small {
+  color: var(--muted);
+}
+
+.calculator-metric-card strong {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.calculator-metric-card.accent {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(255, 253, 250, 0.95));
+  border-color: rgba(15, 118, 110, 0.24);
+}
+
+.calculator-note {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: rgba(240, 247, 245, 0.88);
 }
 
 .volume-status-grid {
