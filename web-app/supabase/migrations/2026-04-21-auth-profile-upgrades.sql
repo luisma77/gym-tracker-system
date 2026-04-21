@@ -35,9 +35,16 @@ $$;
 
 grant execute on function public.resolve_login_identifier(text) to anon, authenticated;
 
-update public.profiles
-set username = lower(nullif(email, ''))
-where username is null and email is not null;
+update public.profiles as profiles
+set username = lower(
+  coalesce(
+    nullif(auth_user.raw_user_meta_data ->> 'username', ''),
+    nullif(profiles.email, '')
+  )
+)
+from auth.users as auth_user
+where auth_user.id = profiles.id
+  and profiles.username is null;
 
 create or replace function public.delete_my_account()
 returns void
