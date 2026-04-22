@@ -22,27 +22,27 @@ type ExerciseVisualCardProps = {
   onToggleZone?: (zone: AnatomyZoneId) => void;
 };
 
-type ShapeProps = {
+type ZoneShellProps = {
   active: boolean;
   interactive: boolean;
   label: string;
   onClick?: () => void;
+  children: ReactNode;
 };
 
-function AnatomyShape({
-  children,
-  active,
-  interactive,
-  label,
-  onClick,
-}: ShapeProps & { children: ReactNode }) {
+type FigureProps = {
+  side: "front" | "back";
+  activeZones: AnatomyZoneId[];
+  interactive: boolean;
+  onToggleZone?: (zone: AnatomyZoneId) => void;
+};
+
+function ZoneShell({ active, interactive, label, onClick, children }: ZoneShellProps) {
   return (
     <g
       aria-label={label}
       className={`anatomy-zone ${active ? "active" : ""} ${interactive ? "interactive" : ""}`}
       onClick={interactive ? onClick : undefined}
-      role={interactive ? "button" : undefined}
-      tabIndex={interactive ? 0 : undefined}
       onKeyDown={
         interactive
           ? (event) => {
@@ -53,144 +53,150 @@ function AnatomyShape({
             }
           : undefined
       }
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
     >
       {children}
     </g>
   );
 }
 
-function HumanFigure({
-  side,
-  activeZones,
-  interactive,
-  onToggleZone,
-}: {
-  side: "front" | "back";
-  activeZones: AnatomyZoneId[];
-  interactive: boolean;
-  onToggleZone?: (zone: AnatomyZoneId) => void;
-}) {
-  const x = side === "front" ? 0 : 170;
+function FigureBase({ side }: { side: "front" | "back" }) {
+  return (
+    <g className={`anatomy-base anatomy-base-${side}`}>
+      <ellipse cx="90" cy="20" rx="17" ry="19" />
+      <path d="M90 40 C80 40 72 48 71 58 L70 72 C76 78 83 82 90 82 C97 82 104 78 110 72 L109 58 C108 48 100 40 90 40 Z" />
+      <path d="M55 66 C46 72 40 82 38 94 C41 102 48 106 56 104 L63 80 C63 74 60 69 55 66 Z" />
+      <path d="M125 66 C134 72 140 82 142 94 C139 102 132 106 124 104 L117 80 C117 74 120 69 125 66 Z" />
+      <path d="M66 80 C60 98 58 116 60 134 C68 144 78 150 90 150 C102 150 112 144 120 134 C122 116 120 98 114 80 C106 74 98 71 90 71 C82 71 74 74 66 80 Z" />
+      <path d="M52 102 C45 114 44 128 48 140 C53 143 58 140 60 133 L63 112 C63 107 59 104 52 102 Z" />
+      <path d="M128 102 C135 114 136 128 132 140 C127 143 122 140 120 133 L117 112 C117 107 121 104 128 102 Z" />
+      <path d="M73 150 L66 204 C65 214 70 223 78 223 C85 223 89 217 89 208 L89 166" />
+      <path d="M107 150 L114 204 C115 214 110 223 102 223 C95 223 91 217 91 208 L91 166" />
+      <path d="M76 223 L73 247 C72 253 76 258 81 258 C87 258 90 252 90 246 L90 223" />
+      <path d="M104 223 L107 247 C108 253 104 258 99 258 C93 258 90 252 90 246 L90 223" />
+      {side === "front" ? (
+        <>
+          <path className="anatomy-detail" d="M72 56 C78 60 84 62 90 62 C96 62 102 60 108 56" />
+          <path className="anatomy-detail" d="M70 88 C76 93 83 96 90 96 C97 96 104 93 110 88" />
+          <path className="anatomy-detail" d="M76 103 L90 145 L104 103" />
+          <path className="anatomy-detail" d="M79 110 L101 110" />
+          <path className="anatomy-detail" d="M78 124 L102 124" />
+        </>
+      ) : (
+        <>
+          <path className="anatomy-detail" d="M72 56 C77 61 83 63 90 63 C97 63 103 61 108 56" />
+          <path className="anatomy-detail" d="M72 80 L90 110 L108 80" />
+          <path className="anatomy-detail" d="M90 82 L90 146" />
+          <path className="anatomy-detail" d="M70 116 C77 121 83 124 90 124 C97 124 103 121 110 116" />
+          <path className="anatomy-detail" d="M72 146 C78 152 83 155 90 155 C97 155 102 152 108 146" />
+        </>
+      )}
+    </g>
+  );
+}
+
+function renderZoneShape(zoneId: AnatomyZoneId, side: "front" | "back") {
+  const front: Partial<Record<AnatomyZoneId, ReactNode>> = {
+    chest: (
+      <>
+        <path d="M63 82 C71 71 82 67 90 74 C98 67 109 71 117 82 L112 108 C104 114 97 118 90 119 C83 118 76 114 68 108 Z" />
+      </>
+    ),
+    "front-delts": (
+      <>
+        <path d="M55 69 C48 73 44 80 45 90 C52 95 60 93 65 86 C66 79 63 72 55 69 Z" />
+        <path d="M125 69 C132 73 136 80 135 90 C128 95 120 93 115 86 C114 79 117 72 125 69 Z" />
+      </>
+    ),
+    biceps: (
+      <>
+        <path d="M46 98 C40 104 38 115 42 124 C49 128 56 123 57 114 C57 107 53 100 46 98 Z" />
+        <path d="M134 98 C140 104 142 115 138 124 C131 128 124 123 123 114 C123 107 127 100 134 98 Z" />
+      </>
+    ),
+    forearms: (
+      <>
+        <path d="M47 123 C42 132 42 142 45 151 C51 154 56 149 57 141 C57 134 54 127 47 123 Z" />
+        <path d="M133 123 C138 132 138 142 135 151 C129 154 124 149 123 141 C123 134 126 127 133 123 Z" />
+      </>
+    ),
+    core: (
+      <>
+        <path d="M76 110 C80 103 85 100 90 100 C95 100 100 103 104 110 L100 146 C96 153 93 161 90 170 C87 161 84 153 80 146 Z" />
+      </>
+    ),
+    quads: (
+      <>
+        <path d="M73 152 C66 165 65 182 69 200 C75 204 81 200 82 191 L84 153 Z" />
+        <path d="M107 152 C114 165 115 182 111 200 C105 204 99 200 98 191 L96 153 Z" />
+      </>
+    ),
+  };
+
+  const back: Partial<Record<AnatomyZoneId, ReactNode>> = {
+    "rear-delts": (
+      <>
+        <path d="M55 69 C48 73 44 80 45 90 C52 94 60 92 64 85 C64 79 61 72 55 69 Z" />
+        <path d="M125 69 C132 73 136 80 135 90 C128 94 120 92 116 85 C116 79 119 72 125 69 Z" />
+      </>
+    ),
+    traps: <path d="M68 58 C74 50 82 46 90 46 C98 46 106 50 112 58 L108 76 C101 72 95 70 90 70 C85 70 79 72 72 76 Z" />,
+    lats: <path d="M66 83 C72 76 80 72 90 72 C100 72 108 76 114 83 L108 136 C102 141 96 145 90 146 C84 145 78 141 72 136 Z" />,
+    triceps: (
+      <>
+        <path d="M46 95 C40 101 38 112 42 121 C48 125 55 121 57 112 C57 105 53 98 46 95 Z" />
+        <path d="M134 95 C140 101 142 112 138 121 C132 125 125 121 123 112 C123 105 127 98 134 95 Z" />
+      </>
+    ),
+    "lower-back": <path d="M78 118 C82 113 86 111 90 111 C94 111 98 113 102 118 L99 147 C96 151 93 157 90 165 C87 157 84 151 81 147 Z" />,
+    glutes: <path d="M71 148 C78 142 84 139 90 139 C96 139 102 142 109 148 L103 171 C99 175 95 178 90 178 C85 178 81 175 77 171 Z" />,
+    hamstrings: (
+      <>
+        <path d="M74 174 C68 187 68 205 73 221 C79 225 84 220 85 211 L86 176 Z" />
+        <path d="M106 174 C112 187 112 205 107 221 C101 225 96 220 95 211 L94 176 Z" />
+      </>
+    ),
+    calves: (
+      <>
+        <path d="M75 220 C70 228 70 239 74 249 C79 252 84 248 84 240 C84 233 81 224 75 220 Z" />
+        <path d="M105 220 C110 228 110 239 106 249 C101 252 96 248 96 240 C96 233 99 224 105 220 Z" />
+      </>
+    ),
+  };
+
+  const bank = side === "front" ? front : back;
+  return bank[zoneId] ?? null;
+}
+
+function Figure({ side, activeZones, interactive, onToggleZone }: FigureProps) {
   const zones = anatomyZones.filter((item) => item.side === side);
-  const isActive = (zone: AnatomyZoneId) => activeZones.includes(zone);
 
   return (
-    <g transform={`translate(${x}, 0)`}>
-      <g className="anatomy-base">
-        <circle cx="86" cy="26" r="16" />
-        <path d="M86 44 C58 44 45 62 45 88 L45 112 C45 126 58 136 72 136 L100 136 C114 136 127 126 127 112 L127 88 C127 62 114 44 86 44 Z" />
-        <path d="M45 76 C28 84 22 106 28 125 L34 146 C36 154 42 158 48 156 C55 154 57 148 56 140 L54 121 C53 111 58 104 66 100" />
-        <path d="M127 76 C144 84 150 106 144 125 L138 146 C136 154 130 158 124 156 C117 154 115 148 116 140 L118 121 C119 111 114 104 106 100" />
-        <path d="M74 136 L66 204 C65 214 70 222 78 222 C86 222 90 214 90 206 L90 162" />
-        <path d="M98 136 L106 204 C107 214 102 222 94 222 C86 222 82 214 82 206 L82 162" />
-      </g>
-
-      {zones.map((zone) => {
-        const shared = {
-          active: isActive(zone.id),
-          interactive,
-          label: zone.label,
-          onClick: () => onToggleZone?.(zone.id),
-        };
-
-        switch (zone.id) {
-          case "chest":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M58 64 C66 54 80 52 86 62 C92 52 106 54 114 64 L112 94 C104 101 94 104 86 106 C78 104 68 101 60 94 Z" />
-              </AnatomyShape>
-            );
-          case "front-delts":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M49 62 C39 66 35 76 36 88 C47 92 57 86 60 76 C60 68 56 63 49 62 Z" />
-                <path d="M123 62 C133 66 137 76 136 88 C125 92 115 86 112 76 C112 68 116 63 123 62 Z" />
-              </AnatomyShape>
-            );
-          case "biceps":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M34 102 C28 108 27 120 32 128 C38 132 44 126 44 118 C44 109 40 103 34 102 Z" />
-                <path d="M138 102 C144 108 145 120 140 128 C134 132 128 126 128 118 C128 109 132 103 138 102 Z" />
-              </AnatomyShape>
-            );
-          case "forearms":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M38 130 C32 138 31 148 34 156 C40 158 45 154 46 146 C46 139 44 133 38 130 Z" />
-                <path d="M134 130 C140 138 141 148 138 156 C132 158 127 154 126 146 C126 139 128 133 134 130 Z" />
-              </AnatomyShape>
-            );
-          case "core":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M66 96 C72 92 79 90 86 90 C93 90 100 92 106 96 L100 136 C94 144 90 152 86 160 C82 152 78 144 72 136 Z" />
-              </AnatomyShape>
-            );
-          case "quads":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M66 140 C60 152 58 170 62 188 C67 194 74 190 76 182 L80 144 Z" />
-                <path d="M106 140 C112 152 114 170 110 188 C105 194 98 190 96 182 L92 144 Z" />
-              </AnatomyShape>
-            );
-          case "rear-delts":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M49 64 C39 68 34 78 36 90 C47 94 57 89 60 78 C59 69 55 65 49 64 Z" />
-                <path d="M123 64 C133 68 138 78 136 90 C125 94 115 89 112 78 C113 69 117 65 123 64 Z" />
-              </AnatomyShape>
-            );
-          case "traps":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M61 58 C70 50 80 46 86 46 C92 46 102 50 111 58 L108 74 C100 72 93 70 86 70 C79 70 72 72 64 74 Z" />
-              </AnatomyShape>
-            );
-          case "lats":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M58 76 C64 70 74 68 86 68 C98 68 108 70 114 76 L108 124 C100 130 93 134 86 136 C79 134 72 130 64 124 Z" />
-              </AnatomyShape>
-            );
-          case "triceps":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M34 100 C28 106 27 118 32 126 C39 130 44 124 44 116 C44 108 40 102 34 100 Z" />
-                <path d="M138 100 C144 106 145 118 140 126 C133 130 128 124 128 116 C128 108 132 102 138 100 Z" />
-              </AnatomyShape>
-            );
-          case "lower-back":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M72 122 C76 118 81 116 86 116 C91 116 96 118 100 122 L96 146 C92 150 89 154 86 160 C83 154 80 150 76 146 Z" />
-              </AnatomyShape>
-            );
-          case "glutes":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M66 140 C74 134 80 132 86 132 C92 132 98 134 106 140 L100 162 C95 168 90 170 86 170 C82 170 77 168 72 162 Z" />
-              </AnatomyShape>
-            );
-          case "hamstrings":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M68 164 C62 174 61 192 66 208 C71 212 76 208 78 198 L80 166 Z" />
-                <path d="M104 164 C110 174 111 192 106 208 C101 212 96 208 94 198 L92 166 Z" />
-              </AnatomyShape>
-            );
-          case "calves":
-            return (
-              <AnatomyShape key={zone.id} {...shared}>
-                <path d="M69 206 C64 214 64 224 69 232 C75 236 80 232 80 224 C80 216 76 208 69 206 Z" />
-                <path d="M103 206 C108 214 108 224 103 232 C97 236 92 232 92 224 C92 216 96 208 103 206 Z" />
-              </AnatomyShape>
-            );
-          default:
+    <div className="exercise-figure-card">
+      <div className="exercise-figure-label">{side === "front" ? "FRENTE" : "ESPALDA"}</div>
+      <svg aria-hidden="true" className="exercise-figure-svg" viewBox="0 0 180 262">
+        <FigureBase side={side} />
+        {zones.map((zone) => {
+          const shape = renderZoneShape(zone.id, side);
+          if (!shape) {
             return null;
-        }
-      })}
-    </g>
+          }
+
+          return (
+            <ZoneShell
+              active={activeZones.includes(zone.id)}
+              interactive={interactive}
+              key={zone.id}
+              label={zone.label}
+              onClick={() => onToggleZone?.(zone.id)}
+            >
+              {shape}
+            </ZoneShell>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 
@@ -199,11 +205,10 @@ function getSelectionSummary(selectedZones: AnatomyZoneId[]) {
     return "Sin filtro manual";
   }
 
-  const labels = anatomyZones
+  return anatomyZones
     .filter((zone) => selectedZones.includes(zone.id))
-    .map((zone) => zone.label);
-
-  return labels.join(" · ");
+    .map((zone) => zone.label)
+    .join(" · ");
 }
 
 export function ExerciseVisualCard({
@@ -214,8 +219,6 @@ export function ExerciseVisualCard({
   onToggleZone,
 }: ExerciseVisualCardProps) {
   const profile = getExerciseVisualProfile(exercise);
-  const activeFront = interactive ? selectedZones.filter((zone) => anatomyZones.find((item) => item.id === zone)?.side === "front") : profile.frontZones;
-  const activeBack = interactive ? selectedZones.filter((zone) => anatomyZones.find((item) => item.id === zone)?.side === "back") : profile.backZones;
   const selectedGroups = getSelectedMuscleGroups(selectedZones);
 
   return (
@@ -231,10 +234,10 @@ export function ExerciseVisualCard({
           <span>{interactive ? getSelectionSummary(selectedZones) : profile.subtitle}</span>
         </div>
 
-        <svg aria-hidden="true" className="exercise-visual-svg" viewBox="0 0 340 240">
-          <HumanFigure activeZones={activeFront} interactive={interactive} onToggleZone={onToggleZone} side="front" />
-          <HumanFigure activeZones={activeBack} interactive={interactive} onToggleZone={onToggleZone} side="back" />
-        </svg>
+        <div className="exercise-visual-map-grid">
+          <Figure activeZones={interactive ? selectedZones.filter((zone) => anatomyZones.find((item) => item.id === zone)?.side === "front") : profile.frontZones} interactive={interactive} onToggleZone={onToggleZone} side="front" />
+          <Figure activeZones={interactive ? selectedZones.filter((zone) => anatomyZones.find((item) => item.id === zone)?.side === "back") : profile.backZones} interactive={interactive} onToggleZone={onToggleZone} side="back" />
+        </div>
 
         {interactive ? (
           <div className="exercise-visual-targets">
@@ -245,7 +248,7 @@ export function ExerciseVisualCard({
                 </span>
               ))
             ) : (
-              <small>Toca una o varias zonas para priorizar extras por músculo.</small>
+              <small>Toca frente o espalda para filtrar el extra por músculo objetivo.</small>
             )}
           </div>
         ) : (
@@ -254,12 +257,20 @@ export function ExerciseVisualCard({
             <span>{profile.subtitle}</span>
           </div>
         )}
+
+        <div className="exercise-motion-placeholder">
+          <div>
+            <strong>Movimiento</strong>
+            <small>Hueco reservado para una demo corta en MP4/WebM. No uso GIF como formato principal porque pierde calidad y pesa mucho.</small>
+          </div>
+          <span className="exercise-motion-pill">Próximo</span>
+        </div>
       </div>
 
       <small className="exercise-visual-note">
         {interactive
           ? "El filtro muscular reordena las recomendaciones, pero mantiene la valoración del día (++ + - --)."
-          : "Vista anatómica propia. Si luego se licencia media real, esta tarjeta puede sustituirse por imagen, vídeo o 3D."}
+          : "Bodymap 2D propio. Si luego se licencia media real, esta tarjeta puede combinar mapa + vídeo corto del ejercicio."}
       </small>
     </div>
   );

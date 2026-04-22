@@ -67,6 +67,7 @@ La navegación se ha dividido para evitar columnas largas y pantallas demasiado 
   - registro completo del día siguiendo la estructura del Excel
   - bloque visual bajo cada ejercicio con silueta anatómica orientativa
   - mapa anatómico interactivo en `Extras` para marcar músculos objetivo y reordenar opciones
+  - bodymap 2D propio con frente y espalda separados, más hueco reservado para una demo futura de movimiento
 - `Cuerpo`
   - formulario compacto de medidas
   - calculadora Harris-Benedict
