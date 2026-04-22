@@ -1,13 +1,32 @@
-export type ExerciseVisualKind = "anatomy" | "image" | "video";
+export type AnatomyZoneId =
+  | "chest"
+  | "front-delts"
+  | "rear-delts"
+  | "biceps"
+  | "triceps"
+  | "forearms"
+  | "core"
+  | "lats"
+  | "traps"
+  | "lower-back"
+  | "glutes"
+  | "quads"
+  | "hamstrings"
+  | "calves";
 
 export type ExerciseVisualProfile = {
-  kind: ExerciseVisualKind;
   title: string;
   subtitle: string;
-  frontZones: string[];
-  backZones: string[];
+  frontZones: AnatomyZoneId[];
+  backZones: AnatomyZoneId[];
   muscleGroup: string;
-  mediaSrc?: string;
+};
+
+export type AnatomyZoneDefinition = {
+  id: AnatomyZoneId;
+  label: string;
+  side: "front" | "back";
+  muscleGroups: string[];
 };
 
 type ExerciseVisualInput = {
@@ -17,110 +36,69 @@ type ExerciseVisualInput = {
   equipment: string;
 };
 
-const profileByMuscleGroup: Record<string, Omit<ExerciseVisualProfile, "title" | "subtitle">> = {
-  Pecho: {
-    kind: "anatomy",
-    frontZones: ["chest"],
-    backZones: [],
-    muscleGroup: "Pecho",
-  },
-  Espalda: {
-    kind: "anatomy",
-    frontZones: [],
-    backZones: ["back"],
-    muscleGroup: "Espalda",
-  },
-  Hombros: {
-    kind: "anatomy",
-    frontZones: ["shoulders"],
-    backZones: ["rear-shoulders"],
-    muscleGroup: "Hombros",
-  },
-  Biceps: {
-    kind: "anatomy",
-    frontZones: ["biceps"],
-    backZones: [],
-    muscleGroup: "Biceps",
-  },
-  Triceps: {
-    kind: "anatomy",
-    frontZones: [],
-    backZones: ["triceps"],
-    muscleGroup: "Triceps",
-  },
-  Femoral: {
-    kind: "anatomy",
-    frontZones: [],
-    backZones: ["hamstrings"],
-    muscleGroup: "Femoral",
-  },
-  Cuadriceps: {
-    kind: "anatomy",
-    frontZones: ["quads"],
-    backZones: [],
-    muscleGroup: "Cuadriceps",
-  },
-  Gluteos: {
-    kind: "anatomy",
-    frontZones: [],
-    backZones: ["glutes"],
-    muscleGroup: "Gluteos",
-  },
-  Core: {
-    kind: "anatomy",
-    frontZones: ["core"],
-    backZones: ["lower-back"],
-    muscleGroup: "Core",
-  },
-  Pantorrillas: {
-    kind: "anatomy",
-    frontZones: ["calves"],
-    backZones: ["calves"],
-    muscleGroup: "Pantorrillas",
-  },
-  Antebrazo: {
-    kind: "anatomy",
-    frontZones: ["forearms"],
-    backZones: ["forearms"],
-    muscleGroup: "Antebrazo",
-  },
-  Trapecios: {
-    kind: "anatomy",
-    frontZones: [],
-    backZones: ["traps"],
-    muscleGroup: "Trapecios",
-  },
-  Movilidad: {
-    kind: "anatomy",
-    frontZones: ["full-body"],
-    backZones: ["full-body"],
-    muscleGroup: "Movilidad",
-  },
-  General: {
-    kind: "anatomy",
-    frontZones: ["full-body"],
-    backZones: ["full-body"],
-    muscleGroup: "General",
-  },
+export const anatomyZones: AnatomyZoneDefinition[] = [
+  { id: "chest", label: "Pecho", side: "front", muscleGroups: ["Pecho"] },
+  { id: "front-delts", label: "Hombro frontal", side: "front", muscleGroups: ["Hombros"] },
+  { id: "rear-delts", label: "Hombro posterior", side: "back", muscleGroups: ["Hombros"] },
+  { id: "biceps", label: "Biceps", side: "front", muscleGroups: ["Biceps"] },
+  { id: "triceps", label: "Triceps", side: "back", muscleGroups: ["Triceps"] },
+  { id: "forearms", label: "Antebrazo", side: "front", muscleGroups: ["Antebrazo"] },
+  { id: "core", label: "Core", side: "front", muscleGroups: ["Core"] },
+  { id: "lats", label: "Espalda", side: "back", muscleGroups: ["Espalda"] },
+  { id: "traps", label: "Trapecio", side: "back", muscleGroups: ["Trapecios"] },
+  { id: "lower-back", label: "Lumbar", side: "back", muscleGroups: ["Core", "Femoral"] },
+  { id: "glutes", label: "Gluteos", side: "back", muscleGroups: ["Gluteos"] },
+  { id: "quads", label: "Cuadriceps", side: "front", muscleGroups: ["Cuadriceps"] },
+  { id: "hamstrings", label: "Femoral", side: "back", muscleGroups: ["Femoral"] },
+  { id: "calves", label: "Pantorrilla", side: "back", muscleGroups: ["Pantorrillas"] },
+];
+
+const zonesByMuscleGroup: Record<string, { front: AnatomyZoneId[]; back: AnatomyZoneId[] }> = {
+  Pecho: { front: ["chest"], back: [] },
+  Espalda: { front: [], back: ["lats"] },
+  Hombros: { front: ["front-delts"], back: ["rear-delts"] },
+  Biceps: { front: ["biceps"], back: [] },
+  Triceps: { front: [], back: ["triceps"] },
+  Antebrazo: { front: ["forearms"], back: [] },
+  Core: { front: ["core"], back: ["lower-back"] },
+  Trapecios: { front: [], back: ["traps"] },
+  Cuadriceps: { front: ["quads"], back: [] },
+  Femoral: { front: [], back: ["hamstrings"] },
+  Gluteos: { front: [], back: ["glutes"] },
+  Pantorrillas: { front: [], back: ["calves"] },
+  Movilidad: { front: ["front-delts", "core", "quads"], back: ["lats", "glutes", "hamstrings"] },
+  General: { front: ["chest", "core"], back: ["lats", "glutes"] },
 };
 
 export function getExerciseVisualProfile(exercise: ExerciseVisualInput | null): ExerciseVisualProfile {
   if (!exercise) {
     return {
-      kind: "anatomy",
       title: "Vista del ejercicio",
-      subtitle: "Selecciona un ejercicio para cargar la vista anatómica.",
-      frontZones: ["full-body"],
-      backZones: ["full-body"],
+      subtitle: "Selecciona un ejercicio para cargar el mapa.",
+      frontZones: ["chest", "core"],
+      backZones: ["lats", "glutes"],
       muscleGroup: "General",
     };
   }
 
-  const profile = profileByMuscleGroup[exercise.muscle_group] ?? profileByMuscleGroup.General;
+  const zoneProfile = zonesByMuscleGroup[exercise.muscle_group] ?? zonesByMuscleGroup.General;
 
   return {
-    ...profile,
     title: exercise.base,
     subtitle: `${exercise.variant} · ${exercise.equipment}`,
+    frontZones: zoneProfile.front,
+    backZones: zoneProfile.back,
+    muscleGroup: exercise.muscle_group,
   };
+}
+
+export function getSelectedMuscleGroups(selectedZones: AnatomyZoneId[]) {
+  const groups = new Set<string>();
+
+  selectedZones.forEach((zoneId) => {
+    const zone = anatomyZones.find((item) => item.id === zoneId);
+    zone?.muscleGroups.forEach((group) => groups.add(group));
+  });
+
+  return [...groups];
 }

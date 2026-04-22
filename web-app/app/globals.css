@@ -1077,20 +1077,89 @@ main {
 .exercise-visual-frame {
   display: grid;
   gap: 10px;
-  min-height: 220px;
-  padding: 12px;
+  min-height: 0;
+  padding: 14px;
   border: 1px solid rgba(15, 118, 110, 0.12);
-  border-radius: 18px;
+  border-radius: 20px;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 38%),
-    linear-gradient(180deg, rgba(255, 253, 250, 0.98), rgba(240, 247, 245, 0.92));
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(16, 22, 28, 0.98), rgba(24, 32, 38, 0.96));
+  color: #eef4f6;
+}
+
+.exercise-visual-map-header {
+  display: grid;
+  gap: 4px;
+}
+
+.exercise-visual-map-header strong {
+  font-size: 1rem;
+}
+
+.exercise-visual-map-header span {
+  color: rgba(238, 244, 246, 0.72);
+  font-size: 0.88rem;
 }
 
 .exercise-visual-svg {
   width: 100%;
-  height: 160px;
+  height: 240px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(15, 118, 110, 0.04));
+}
+
+.anatomy-base {
+  fill: rgba(125, 139, 162, 0.42);
+  stroke: rgba(179, 189, 204, 0.72);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.anatomy-zone {
+  fill: rgba(255, 153, 51, 0.16);
+  stroke: rgba(255, 178, 102, 0.4);
+  stroke-width: 2.5;
+  transition: fill 0.18s ease, stroke 0.18s ease, filter 0.18s ease;
+}
+
+.anatomy-zone.active {
+  fill: rgba(255, 132, 0, 0.94);
+  stroke: rgba(255, 205, 144, 0.98);
+  filter: drop-shadow(0 0 9px rgba(255, 132, 0, 0.28));
+}
+
+.anatomy-zone.interactive {
+  cursor: pointer;
+}
+
+.anatomy-zone.interactive:hover {
+  fill: rgba(255, 132, 0, 0.7);
+  stroke: rgba(255, 205, 144, 0.92);
+}
+
+.exercise-visual-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.exercise-visual-targets small {
+  color: rgba(238, 244, 246, 0.74);
+}
+
+.exercise-visual-target-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 132, 0, 0.16);
+  border: 1px solid rgba(255, 184, 108, 0.26);
+  color: #ffd8a7;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .exercise-visual-caption {
@@ -1098,9 +1167,20 @@ main {
   gap: 4px;
 }
 
+.exercise-visual-caption strong {
+  color: #eef4f6;
+}
+
 .exercise-visual-caption span {
-  color: var(--muted);
+  color: rgba(238, 244, 246, 0.72);
   font-size: 0.92rem;
+}
+
+.exercise-visual-card.interactive .exercise-visual-frame {
+  border-color: rgba(255, 184, 108, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(255, 132, 0, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(10, 12, 16, 0.98), rgba(18, 20, 26, 0.98));
 }
 
 .exercise-variant-cell select {
@@ -1428,7 +1508,7 @@ main {
   }
 
   .exercise-visual-svg {
-    height: 140px;
+    height: 210px;
   }
 }
 

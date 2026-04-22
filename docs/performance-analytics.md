@@ -66,6 +66,7 @@ La navegación se ha dividido para evitar columnas largas y pantallas demasiado 
 - `Sesion`
   - registro completo del día siguiendo la estructura del Excel
   - bloque visual bajo cada ejercicio con silueta anatómica orientativa
+  - mapa anatómico interactivo en `Extras` para marcar músculos objetivo y reordenar opciones
 - `Cuerpo`
   - formulario compacto de medidas
   - calculadora Harris-Benedict
@@ -160,4 +161,4 @@ El archivo Excel ya sale muy completo a nivel de datos y análisis, pero todaví
 
 Para eso habrá que mover la exportación a una vía que soporte creación real de charts dentro del workbook.
 
-En la sesión ya existe hueco preparado para media del ejercicio, pero la implementación actual usa una silueta SVG propia. Para tener imagen, vídeo o animación 3D real hará falta integrar una fuente licenciada o producir assets propios.
+En la sesión ya existe hueco preparado para media del ejercicio, pero la implementación actual usa un anatomy map SVG propio. No se ha integrado media real de MuscleWiki porque sus términos restringen fuerte bodymaps, thumbnails y vídeo; para tener imagen, vídeo o animación 3D real hará falta integrar una fuente licenciada o producir assets propios.

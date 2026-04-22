@@ -19,6 +19,7 @@ import { getAuthToken, getStoredUser } from "@/lib/auth-storage";
 import { ExerciseVisualCard } from "@/components/exercise-visual-card";
 import { dayTemplates } from "@/lib/day-templates";
 import { seedExercises, type SeedExercise } from "@/lib/exercise-seed";
+import { getSelectedMuscleGroups, type AnatomyZoneId } from "@/lib/exercise-media";
 import {
   ACTIVITY_OPTIONS,
   GOAL_OPTIONS,
@@ -61,6 +62,7 @@ type ExerciseRowDraft = {
   family: string;
   exerciseId: string;
   isExtra: boolean;
+  targetZones: AnatomyZoneId[];
   sets: SetDraft[];
 };
 
@@ -371,6 +373,7 @@ function buildInitialRows(
         family: entry.family,
         exerciseId: matchingExercise ? String(matchingExercise.id) : "",
         isExtra: false,
+        targetZones: [],
         sets: createSetDrafts(Math.min(SERIES_PER_ROW, entry.defaultSets)),
       };
     })
@@ -568,6 +571,15 @@ function getExtraExerciseRating(
   }
 
   return "-";
+}
+
+function getExtraTargetMatch(exercise: EnrichedExercise | null, targetZones: AnatomyZoneId[]) {
+  if (!exercise || targetZones.length === 0) {
+    return false;
+  }
+
+  const selectedGroups = getSelectedMuscleGroups(targetZones);
+  return selectedGroups.includes(exercise.muscle_group) || (selectedGroups.includes("Core") && isCoreOrLumbarExercise(exercise));
 }
 
 function getDayAddHints(dayKind: DayKind, rows: ExerciseRowDraft[], exercisesById: Map<number, EnrichedExercise>) {
@@ -894,6 +906,15 @@ export function DashboardClient() {
     });
   }
 
+  function toggleExtraTargetZone(rowKey: string, zone: AnatomyZoneId) {
+    updateRow(rowKey, (row) => ({
+      ...row,
+      targetZones: row.targetZones.includes(zone)
+        ? row.targetZones.filter((item) => item !== zone)
+        : [...row.targetZones, zone],
+    }));
+  }
+
   function addExtraRow() {
     setDraft((current) => ({
       ...current,
@@ -906,6 +927,7 @@ export function DashboardClient() {
           family: "Extra",
           exerciseId: "",
           isExtra: true,
+          targetZones: [],
           sets: createSetDrafts(3),
         },
       ],
@@ -1440,10 +1462,28 @@ export function DashboardClient() {
                     const exercise = exercisesById.get(Number(row.exerciseId)) ?? null;
                     const rating = getExtraExerciseRating(exercise, dayKind, draft.rows, exercisesById);
                     const progression = exercise ? progressByExercise.get(exercise.id) : null;
-                    const ratedOptions = extraExerciseOptions.map((option) => ({
-                      option,
-                      rating: getExtraExerciseRating(option, dayKind, draft.rows.filter((item) => item.key !== row.key), exercisesById),
-                    }));
+                    const selectedMuscleGroups = getSelectedMuscleGroups(row.targetZones);
+                    const ratedOptions = extraExerciseOptions
+                      .map((option) => {
+                        const optionRating = getExtraExerciseRating(option, dayKind, draft.rows.filter((item) => item.key !== row.key), exercisesById);
+                        const targetMatch = getExtraTargetMatch(option, row.targetZones);
+                        const ratingScore = optionRating === "++" ? 4 : optionRating === "+" ? 3 : optionRating === "-" ? 2 : 1;
+                        return {
+                          option,
+                          rating: optionRating,
+                          targetMatch,
+                          ratingScore,
+                        };
+                      })
+                      .sort((left, right) => {
+                        if (left.targetMatch !== right.targetMatch) {
+                          return left.targetMatch ? -1 : 1;
+                        }
+                        if (left.ratingScore !== right.ratingScore) {
+                          return right.ratingScore - left.ratingScore;
+                        }
+                        return left.option.name.localeCompare(right.option.name, "es");
+                      });
 
                     return (
                       <div className="exercise-table-row extra-row" key={row.key}>
@@ -1453,27 +1493,39 @@ export function DashboardClient() {
                             <span className="exercise-subfamily">Controlado por volumen</span>
                           </div>
                           <ExerciseVisualCard
-                            caption={exercise ? `Músculo objetivo · ${exercise.muscle_group}` : "Añade un extra para ver la referencia visual"}
+                            caption={
+                              selectedMuscleGroups.length > 0
+                                ? `Objetivo manual · ${selectedMuscleGroups.join(" · ")}`
+                                : "Usa el mapa para decir qué músculo quieres reforzar"
+                            }
                             exercise={exercise}
+                            interactive
+                            onToggleZone={(zone) => toggleExtraTargetZone(row.key, zone)}
+                            selectedZones={row.targetZones}
                           />
                         </div>
                         <div className="exercise-variant-cell">
                           <select onChange={(event) => changeRowExercise(row.key, event.target.value)} value={row.exerciseId}>
                             <option value="">Selecciona un ejercicio</option>
-                            {ratedOptions.map(({ option, rating: optionRating }) => (
+                            {ratedOptions.map(({ option, rating: optionRating, targetMatch }) => (
                               <option key={option.id} value={option.id}>
-                                {optionRating ? `${optionRating} ` : ""}{option.base} · {option.variant}
+                                {targetMatch ? "OBJ " : ""}{optionRating ? `${optionRating} ` : ""}{option.base} · {option.variant}
                               </option>
                             ))}
                           </select>
                           <small>{exercise?.muscle_group ?? "--"}</small>
+                          {selectedMuscleGroups.length > 0 ? (
+                            <small>Objetivo manual: {selectedMuscleGroups.join(" · ")}</small>
+                          ) : (
+                            <small>Sin objetivo manual; manda solo la lógica del día.</small>
+                          )}
                           <div className="dropdown-rating-legend">
-                            {ratedOptions.slice(0, 6).map(({ option, rating: optionRating }) => (
+                            {ratedOptions.slice(0, 6).map(({ option, rating: optionRating, targetMatch }) => (
                               <span
                                 className={`option-rating ${optionRating?.replaceAll("+", "plus").replaceAll("-", "minus") ?? "neutral"}`}
                                 key={`${row.key}-${option.id}`}
                               >
-                                {optionRating ?? "--"} {option.base}
+                                {targetMatch ? "OBJ · " : ""}{optionRating ?? "--"} {option.base}
                               </span>
                             ))}
                           </div>

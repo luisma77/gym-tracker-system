@@ -18,6 +18,7 @@ Gym Tracker System convierte la lógica del Excel PPL en una aplicación web usa
 - login, registro y callback de autenticación
 - dashboard de entrenamiento
 - bloque visual anatómico bajo el nombre del ejercicio dentro del registro de sesión
+- anatomy map interactivo en los ejercicios extra para elegir músculo objetivo antes de escoger el movimiento
 - registro de series y medidas
 - perfil y ajustes
 - informes PDF y Excel de rendimiento
