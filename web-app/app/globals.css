@@ -1008,7 +1008,7 @@ main {
 
 .exercise-table-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(280px, 1.15fr) minmax(220px, 0.9fr) minmax(420px, 1.95fr);
   gap: 12px;
   align-items: stretch;
   padding: 10px;
@@ -1029,9 +1029,78 @@ main {
   min-width: 0;
 }
 
+.exercise-main-cell {
+  gap: 12px;
+}
+
+.exercise-main-head {
+  display: grid;
+  gap: 4px;
+}
+
 .exercise-subfamily {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.exercise-visual-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.exercise-visual-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-visual-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.exercise-visual-meta small,
+.exercise-visual-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.exercise-visual-frame {
+  display: grid;
+  gap: 10px;
+  min-height: 220px;
+  padding: 12px;
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(255, 253, 250, 0.98), rgba(240, 247, 245, 0.92));
+}
+
+.exercise-visual-svg {
+  width: 100%;
+  height: 160px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.exercise-visual-caption {
+  display: grid;
+  gap: 4px;
+}
+
+.exercise-visual-caption span {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .exercise-variant-cell select {
@@ -1345,11 +1414,21 @@ main {
 
 @media (max-width: 1180px) {
   .exercise-table-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   }
 
   .exercise-series-panel {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .exercise-visual-frame {
+    min-height: 0;
+  }
+
+  .exercise-visual-svg {
+    height: 140px;
   }
 }
 

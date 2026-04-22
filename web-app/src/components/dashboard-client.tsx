@@ -16,6 +16,7 @@ import {
   type WorkoutSession,
 } from "@/lib/api";
 import { getAuthToken, getStoredUser } from "@/lib/auth-storage";
+import { ExerciseVisualCard } from "@/components/exercise-visual-card";
 import { dayTemplates } from "@/lib/day-templates";
 import { seedExercises, type SeedExercise } from "@/lib/exercise-seed";
 import {
@@ -1335,8 +1336,14 @@ export function DashboardClient() {
                         return (
                           <div className="exercise-table-row" key={row.key}>
                             <div className="exercise-main-cell">
-                              {row.subfamily ? <span className="exercise-subfamily">{row.subfamily}</span> : null}
-                              <strong>{row.family}</strong>
+                              <div className="exercise-main-head">
+                                {row.subfamily ? <span className="exercise-subfamily">{row.subfamily}</span> : null}
+                                <strong>{row.family}</strong>
+                              </div>
+                              <ExerciseVisualCard
+                                caption={exercise ? `Músculo principal · ${exercise.muscle_group}` : "Selecciona una variante para cargar la vista"}
+                                exercise={exercise}
+                              />
                             </div>
 
                         <div className="exercise-variant-cell">
@@ -1441,8 +1448,14 @@ export function DashboardClient() {
                     return (
                       <div className="exercise-table-row extra-row" key={row.key}>
                         <div className="exercise-main-cell">
-                          <strong>Extra</strong>
-                          <span className="exercise-subfamily">Controlado por volumen</span>
+                          <div className="exercise-main-head">
+                            <strong>Extra</strong>
+                            <span className="exercise-subfamily">Controlado por volumen</span>
+                          </div>
+                          <ExerciseVisualCard
+                            caption={exercise ? `Músculo objetivo · ${exercise.muscle_group}` : "Añade un extra para ver la referencia visual"}
+                            exercise={exercise}
+                          />
                         </div>
                         <div className="exercise-variant-cell">
                           <select onChange={(event) => changeRowExercise(row.key, event.target.value)} value={row.exerciseId}>

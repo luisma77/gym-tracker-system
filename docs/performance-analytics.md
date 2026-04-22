@@ -65,6 +65,7 @@ La navegación se ha dividido para evitar columnas largas y pantallas demasiado 
   - mensajes cortos de qué vigilar ahora
 - `Sesion`
   - registro completo del día siguiendo la estructura del Excel
+  - bloque visual bajo cada ejercicio con silueta anatómica orientativa
 - `Cuerpo`
   - formulario compacto de medidas
   - calculadora Harris-Benedict
@@ -158,3 +159,5 @@ Además:
 El archivo Excel ya sale muy completo a nivel de datos y análisis, pero todavía no incrusta gráficas nativas de Excel dentro del `.xlsx`.
 
 Para eso habrá que mover la exportación a una vía que soporte creación real de charts dentro del workbook.
+
+En la sesión ya existe hueco preparado para media del ejercicio, pero la implementación actual usa una silueta SVG propia. Para tener imagen, vídeo o animación 3D real hará falta integrar una fuente licenciada o producir assets propios.
